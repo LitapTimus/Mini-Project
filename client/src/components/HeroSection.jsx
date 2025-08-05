@@ -1,6 +1,9 @@
 import { FiArrowRight } from "react-icons/fi";
+import { useNavigate } from "react-router-dom"; // 👈 Import navigate hook
 
 export default function HeroSection() {
+  const navigate = useNavigate(); // 👈 Use the hook
+
   return (
     <section className="bg-[#f9fafb] py-8 px-4 text-center">
       <div className="max-w-4xl mx-auto">
@@ -14,15 +17,14 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
           <button
-            onClick={() => {
-              document
-                .getElementById("stats")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-600 transition"
-          >
-            Start Your Journey <FiArrowRight className="w-4 h-4" />
-          </button>
+  onClick={() => {
+    window.location.href = "http://localhost:3000/auth/google";
+  }}
+  className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-600 transition"
+>
+  Start Your Journey <FiArrowRight className="w-4 h-4" />
+</button>
+
           <button className="bg-white text-gray-800 px-6 py-3 rounded-full shadow hover:bg-gray-100 transition">
             Explore Careers
           </button>
