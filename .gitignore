@@ -27,3 +27,14 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+
+# Personal photos/images
+client/public/personal-photos/
+client/src/assets/personal-photos/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp

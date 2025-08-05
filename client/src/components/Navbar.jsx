@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function Navbar() {
   return (
     <header className="flex justify-between items-center px-6 py-4 bg-white shadow">
@@ -22,9 +24,9 @@ export default function Navbar() {
           <a href="#testimonials" className="hover:text-green-600">
             Testimonials
           </a>
-          <a href="#about" className="hover:text-green-600">
+          <Link to="/about" className="hover:text-green-600">
             About
-          </a>
+          </Link>
           <a href="#contact" className="hover:text-green-600">
             Contact Us
           </a>
