@@ -17,13 +17,11 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
           <button
-  onClick={() => {
-    window.location.href = "http://localhost:3000/auth/google";
-  }}
-  className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-600 transition"
->
-  Start Your Journey <FiArrowRight className="w-4 h-4" />
-</button>
+            onClick={() => navigate("/login-options")}
+            className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-600 transition"
+          >
+            Start Your Journey <FiArrowRight className="w-4 h-4" />
+          </button>
 
           <button className="bg-white text-gray-800 px-6 py-3 rounded-full shadow hover:bg-gray-100 transition">
             Explore Careers

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "../pages/LandingPage";
+import LoginOptions from "../pages/LoginOptions";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect } from "react";
@@ -17,6 +18,9 @@ export default function AppRoutes() {
       <Routes>
         {/* Public landing page */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* Login options page */}
+        <Route path="/login-options" element={<LoginOptions />} />
 
         {/* Protected dashboard */}
         <Route
