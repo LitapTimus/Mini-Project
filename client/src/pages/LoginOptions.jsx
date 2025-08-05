@@ -1,9 +1,11 @@
+import { FiBookOpen, FiBriefcase, FiUser } from "react-icons/fi";
+
 export default function LoginOptions() {
   const handleLoginOption = (userType) => {
     localStorage.setItem("selectedUserType", userType);
-    window.location.href = "http://localhost:3000/auth/google";
+    // Use Google OAuth with user type parameter
+    window.location.href = `http://localhost:3000/auth/google/${userType}`;
   };
-
   return (
     <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white/30 backdrop-blur-lg border border-white/60 rounded-xl shadow-lg p-8">
@@ -79,4 +81,3 @@ export default function LoginOptions() {
     </div>
   );
 }
-import { FiBookOpen, FiBriefcase, FiUser } from "react-icons/fi";   

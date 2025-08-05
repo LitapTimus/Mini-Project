@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "../pages/LandingPage";
 import LoginOptions from "../pages/LoginOptions";
 import AboutPage from "../pages/AboutPage";
+import StudentLanding from "../pages/StudentLanding";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect } from "react";
@@ -25,6 +26,9 @@ export default function AppRoutes() {
 
         {/* About page */}
         <Route path="/about" element={<AboutPage />} />
+
+        {/* Student dashboard */}
+        <Route path="/student-dashboard" element={<StudentLanding />} />
 
         {/* Protected dashboard */}
         <Route
