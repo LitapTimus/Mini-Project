@@ -4,10 +4,19 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const mongoose = require('mongoose');
 const routes = require('./routes/index');
+const studentRoutes = require('./routes/students');
+const assessmentRoutes = require('./routes/assessments');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/career-compass')
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
 
 // CORS middleware (must come before routes)
 const cors = require('cors');
@@ -96,8 +105,11 @@ app.get('/auth/user', (req, res) => {
     }
 });
 
-// Other API routes
+// API routes
 app.use('/api', routes);
+app.use('/api/students', studentRoutes);
+app.use('/api/assessments', assessmentRoutes);
+
 
 // Start server
 app.listen(PORT, () => {

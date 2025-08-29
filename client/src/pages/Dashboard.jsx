@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StudentDashboard from "./StudentDashboard";
+import MentorDashboard from "./MentorDashboard";
+import RecruiterDashboard from "./RecruiterDashboard";
 
 export default function Dashboard() {
   const [selectedRole, setSelectedRole] = useState(null);
@@ -33,13 +35,23 @@ export default function Dashboard() {
     );
   }
 
-  // Render role-specific dashboard content
+    // Render role-specific dashboard content
   if (selectedRole === "student") {
     console.log("Rendering StudentDashboard");
     return <StudentDashboard />;
   }
 
-  // For other roles, show a placeholder (you can create these components later)
+  if (selectedRole === "mentor") {
+    console.log("Rendering MentorDashboard");
+    return <MentorDashboard />;
+  }
+
+  if (selectedRole === "recruiter") {
+    console.log("Rendering RecruiterDashboard");
+    return <RecruiterDashboard />;
+  }
+
+  // For any other roles, show a placeholder
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center max-w-md mx-auto p-8">
