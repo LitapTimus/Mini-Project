@@ -1,6 +1,9 @@
 import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ user, children }) => {
+const ProtectedRoute = ({ user, loading, children }) => {
+  if (loading) {
+    return children; // Show loading state
+  }
   if (!user) {
     return <Navigate to="/" replace />;
   }

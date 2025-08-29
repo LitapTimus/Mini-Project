@@ -9,6 +9,13 @@ const routes = require('./routes/index');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS middleware (must come before routes)
+const cors = require('cors');
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
+
 // Session middleware
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -19,7 +26,6 @@ app.use(session({
         secure: false // true in production with HTTPS
     }
 }));
-
 
 // Body parser
 app.use(bodyParser.json());
@@ -33,7 +39,7 @@ app.use(passport.session());
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback"
+    callbackURL: "http://localhost:3000/auth/google/callback"
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
 }));
@@ -62,7 +68,6 @@ app.get('/auth/google/callback',
     }
 );
 
-
 // Protected profile route
 app.get('/profile', (req, res) => {
     if (!req.isAuthenticated()) {
@@ -79,7 +84,7 @@ app.get('/profile', (req, res) => {
 app.get('/logout', (req, res) => {
     req.logout((err) => {
         if (err) return next(err);
-        res.redirect('/');
+        res.redirect('http://localhost:5173');
     });
 });
 
@@ -91,18 +96,8 @@ app.get('/auth/user', (req, res) => {
     }
 });
 
-
 // Other API routes
 app.use('/api', routes);
-
-const cors = require('cors');
-
-// Allow requests from your frontend (React)
-app.use(cors({
-    origin: 'http://localhost:5173', // or 3000 or your deployed React URL
-    credentials: true
-}));
-
 
 // Start server
 app.listen(PORT, () => {
