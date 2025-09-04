@@ -1,8 +1,8 @@
 import { FiArrowRight } from "react-icons/fi";
-import { useNavigate } from "react-router-dom"; // 👈 Import navigate hook
+import { useNavigate } from "react-router-dom";
 
 export default function HeroSection() {
-  const navigate = useNavigate(); // 👈 Use the hook
+  const navigate = useNavigate();
 
   return (
     <section className="bg-[#f9fafb] py-8 px-4 text-center">
@@ -17,7 +17,7 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
           <button
-            onClick={() => navigate("/login-options")}
+            onClick={() => navigate("/role-selection")}
             className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-600 transition"
           >
             Start Your Journey <FiArrowRight className="w-4 h-4" />

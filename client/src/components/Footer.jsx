@@ -1,11 +1,11 @@
 export default function Footer() {
   return (
-    <footer className="bg-green-700 text-white pt-6 pb-4 text-xs md:text-sm">
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <footer className="bg-green-600 text-white pt-10 pb-6">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         {/* Brand & description */}
         <div>
-          <div className="text-base font-semibold mb-2">🚀 Career Compass</div>
-          <p className="text-green-100 leading-snug">
+          <div className="text-xl font-semibold mb-3">🚀 Career Compass</div>
+          <p className="text-sm text-green-100">
             Empowering professionals to navigate their career journey with
             confidence. Discover, learn, and achieve your dream career with our
             AI-powered platform.
@@ -14,8 +14,8 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h4 className="font-semibold mb-2">Quick Links</h4>
-          <ul className="space-y-1 text-green-100">
+          <h4 className="font-semibold mb-3">Quick Links</h4>
+          <ul className="space-y-2 text-sm text-green-100">
             <li>
               <a href="#" className="hover:underline">
                 About Us
@@ -46,8 +46,8 @@ export default function Footer() {
 
         {/* Resources */}
         <div>
-          <h4 className="font-semibold mb-2">Resources</h4>
-          <ul className="space-y-1 text-green-100">
+          <h4 className="font-semibold mb-3">Resources</h4>
+          <ul className="space-y-2 text-sm text-green-100">
             <li>
               <a href="#" className="hover:underline">
                 Career Guide
@@ -78,20 +78,20 @@ export default function Footer() {
 
         {/* Contact & Newsletter */}
         <div>
-          <h4 className="font-semibold mb-2">Contact Us</h4>
-          <p className="text-green-100 mb-1">hello@careercompass.com</p>
-          <p className="text-green-100 mb-1">+1 (555) 123-4567</p>
-          <p className="text-green-100 mb-2">San Francisco, CA</p>
-          <h4 className="font-semibold mb-1">Stay Updated</h4>
+          <h4 className="font-semibold mb-3">Contact Us</h4>
+          <p className="text-sm text-green-100 mb-2">hello@careercompass.com</p>
+          <p className="text-sm text-green-100 mb-2">+1 (555) 123-4567</p>
+          <p className="text-sm text-green-100 mb-4">San Francisco, CA</p>
+          <h4 className="font-semibold mb-2">Stay Updated</h4>
           <form className="flex">
             <input
               type="email"
               placeholder="Enter your email"
-              className="px-2 py-1 rounded-l bg-green-50 text-green-900 w-full focus:outline-none text-xs"
+              className="px-2 py-1 rounded-l bg-green-50 text-green-900 text-sm w-full focus:outline-none"
             />
             <button
               type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-2 rounded-r text-xs"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-3 rounded-r text-sm"
             >
               Subscribe
             </button>
@@ -100,7 +100,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom legal section */}
-      <div className="border-t border-green-500 pt-2 mt-2 text-center text-green-100 space-x-2">
+      <div className="border-t border-green-500 pt-4 mt-4 text-xs text-center text-green-100 space-x-3">
         <span>
           © {new Date().getFullYear()} Career Compass. All rights reserved.
         </span>

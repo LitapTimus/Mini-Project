@@ -12,7 +12,6 @@ export default function LandingPage(){
        <HeroSection/>
        <StatsSection/>
        <ArrowScroll/>
-       
        <FeaturesSection/>
        <TestimonialsSection/>
        </div>
