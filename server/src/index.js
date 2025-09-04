@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -5,8 +6,10 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 
 // CORS config
 app.use(
@@ -29,11 +32,12 @@ app.use(
   })
 );
 
+
 // Passport setup
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Google OAuth Strategy
+
 passport.use(
   new GoogleStrategy(
     {
@@ -46,6 +50,7 @@ passport.use(
     }
   )
 );
+
 
 passport.serializeUser((user, done) => {
   done(null, user);
@@ -81,6 +86,7 @@ app.get(
       redirectURL = "http://localhost:5173/recruiter-dashboard";
     }
 
+
     res.redirect(redirectURL);
   }
 );
@@ -99,6 +105,7 @@ app.get("/auth/logout", (req, res) => {
   req.logout(() => {
     res.redirect("http://localhost:5173");
   });
+
 });
 
 // Fallback
@@ -106,7 +113,8 @@ app.get("*", (req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start Server
+
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });

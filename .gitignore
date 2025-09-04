@@ -1,3 +1,4 @@
+
 # Node modules
 node_modules/
 client/node_modules/
@@ -38,3 +39,4 @@ client/src/assets/personal-photos/
 *.bmp
 *.tiff
 *.webp
+

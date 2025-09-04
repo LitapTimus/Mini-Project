@@ -24,13 +24,16 @@ export default function Navbar() {
           <a href="#testimonials" className="hover:text-green-600">
             Testimonials
           </a>
+
           <Link to="/about" className="hover:text-green-600">
             About
           </Link>
+
           <a href="#contact" className="hover:text-green-600">
             Contact Us
           </a>
         </nav>
+
         <button className="hidden md:block bg-green-600 text-white px-4 py-2 rounded-full shadow hover:bg-green-900 transition">
           Get Started
         </button>
@@ -38,3 +41,4 @@ export default function Navbar() {
     </header>
   );
 }
+
