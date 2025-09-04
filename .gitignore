@@ -1,3 +1,42 @@
-.env
-# .gitignore
+
+# Node modules
 node_modules/
+client/node_modules/
+server/node_modules/
+
+# Env files
+.env
+server/.env
+client/.env
+
+# Build outputs
+client/dist/
+client/build/
+server/dist/
+server/build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Personal photos/images
+client/public/personal-photos/
+client/src/assets/personal-photos/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+

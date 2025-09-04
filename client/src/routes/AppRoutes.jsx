@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "../pages/LandingPage";
-import RoleSelection from "../pages/RoleSelection";
+
+import LoginOptions from "../pages/LoginOptions";
+import AboutPage from "../pages/AboutPage";
+import StudentLanding from "../pages/StudentLanding";
+
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect, useCallback } from "react";
@@ -39,10 +43,18 @@ export default function AppRoutes() {
         {/* Public landing page */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Role selection page */}
-        <Route path="/role-selection" element={<RoleSelection />} />
 
-        {/* Protected dashboard - handles all role-based routing internally */}
+        {/* Login options page */}
+        <Route path="/login-options" element={<LoginOptions />} />
+
+        {/* About page */}
+        <Route path="/about" element={<AboutPage />} />
+
+        {/* Student dashboard */}
+        <Route path="/student-dashboard" element={<StudentLanding />} />
+
+        {/* Protected dashboard */}
+
         <Route
           path="/dashboard"
           element={
