@@ -132,7 +132,15 @@ const studentTestResultSchema = new mongoose.Schema({
   },
   topDomains: [String], // Top 3-4 strongest domains
   recommendations: [String],
-  careerSuggestions: [String]
+  careerSuggestions: [String],
+  aiAnalysis: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+  aiError: {
+    type: String,
+    default: null
+  }
 });
 
 module.exports = {

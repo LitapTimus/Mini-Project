@@ -57,6 +57,21 @@ export const assessmentService = {
     }
     
     return response.json();
+  },
+
+  // Reset assessment (Admin function)
+  async resetAssessment() {
+    const response = await fetch(`${API_BASE_URL}/assessments/reset`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reset assessment');
+    }
+    
+    return response.json();
   }
 };
 

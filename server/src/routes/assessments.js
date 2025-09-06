@@ -1,5 +1,7 @@
 const express = require('express');
 const { Assessment, StudentTestResult } = require('../models/Assessment');
+const aiService = require('../services/aiService');
+const aiConfig = require('../config/aiConfig');
 const router = express.Router();
 
 // Middleware to check if user is authenticated
@@ -57,9 +59,38 @@ router.post('/submit', isAuthenticated, async (req, res) => {
     // Get top domains
     const topDomains = getTopDomains(domainScores);
     
-    // Generate recommendations and career suggestions
+    // Generate traditional recommendations and career suggestions
     const recommendations = generateRecommendations(domainScores, topDomains);
     const careerSuggestions = generateCareerSuggestions(topDomains);
+
+    // AI Analysis
+    let aiAnalysis = null;
+    let aiError = null;
+    
+    try {
+      console.log('Starting AI analysis...');
+      aiAnalysis = await aiService.analyzeAssessmentAnswers(assessment, answers, domainScores, topDomains);
+      console.log('AI analysis completed successfully');
+    } catch (error) {
+      console.error('AI analysis failed:', error.message);
+      aiError = error.message;
+      
+      // Continue with traditional recommendations if AI fails
+      if (!aiConfig.fallback.enabled) {
+        throw error;
+      }
+    }
+
+    // Prepare enhanced recommendations
+    const enhancedRecommendations = aiAnalysis ? 
+      aiAnalysis.career_recommendations.primary_careers.map(career => career.title) :
+      recommendations;
+    
+    const enhancedCareerSuggestions = aiAnalysis ?
+      aiAnalysis.career_recommendations.primary_careers.concat(
+        aiAnalysis.career_recommendations.secondary_careers || []
+      ).map(career => career.title) :
+      careerSuggestions;
 
     // Save test result
     const testResult = new StudentTestResult({
@@ -76,8 +107,10 @@ router.post('/submit', isAuthenticated, async (req, res) => {
       percentage,
       timeTaken,
       topDomains,
-      recommendations,
-      careerSuggestions
+      recommendations: enhancedRecommendations,
+      careerSuggestions: enhancedCareerSuggestions,
+      aiAnalysis: aiAnalysis,
+      aiError: aiError
     });
 
     await testResult.save();
@@ -90,8 +123,11 @@ router.post('/submit', isAuthenticated, async (req, res) => {
         percentage,
         domainScores,
         topDomains,
-        recommendations,
-        careerSuggestions
+        recommendations: enhancedRecommendations,
+        careerSuggestions: enhancedCareerSuggestions,
+        aiAnalysis: aiAnalysis,
+        aiError: aiError,
+        hasAIAnalysis: !!aiAnalysis
       }
     });
 
@@ -139,6 +175,26 @@ router.get('/results/:resultId', isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error fetching specific result:', error);
     res.status(500).json({ error: 'Failed to fetch result' });
+  }
+});
+
+// Reset/Update assessment (Admin function)
+router.post('/reset', isAuthenticated, async (req, res) => {
+  try {
+    // Delete existing active assessments
+    await Assessment.deleteMany({ isActive: true });
+    
+    // Create new assessment with all 72 questions
+    const assessment = await createDefaultAssessment();
+    
+    res.json({ 
+      success: true, 
+      message: 'Assessment reset successfully',
+      questionCount: assessment.questions.length 
+    });
+  } catch (error) {
+    console.error('Error resetting assessment:', error);
+    res.status(500).json({ error: 'Failed to reset assessment' });
   }
 });
 
@@ -407,8 +463,737 @@ async function createDefaultAssessment() {
         { text: "Disagree", value: "D", score: 2 },
         { text: "Strongly Disagree", value: "E", score: 1 }
       ]
+    },
+    // Visual-Spatial Intelligence (Questions 13-18)
+    {
+      domain: 'visual-spatial',
+      questionNumber: 13,
+      question: "I enjoy drawing, designing, or visualizing ideas.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'visual-spatial',
+      questionNumber: 14,
+      question: "I can interpret maps, floor plans, or blueprints easily.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'visual-spatial',
+      questionNumber: 15,
+      question: "I often think in pictures rather than words.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'visual-spatial',
+      questionNumber: 16,
+      question: "I am skilled at recognizing patterns and visual details.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'visual-spatial',
+      questionNumber: 17,
+      question: "I enjoy building models, crafting, or arranging spaces.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'visual-spatial',
+      questionNumber: 18,
+      question: "I would enjoy a career involving architecture, animation, or design.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Musical-Rhythmic Intelligence (Questions 19-24)
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 19,
+      question: "I can easily recognize different musical notes or rhythms.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 20,
+      question: "I play a musical instrument or sing.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 21,
+      question: "I remember songs easily after hearing them once or twice.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 22,
+      question: "I enjoy composing or mixing music.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 23,
+      question: "Music helps me focus or think better.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'musical-rhythmic',
+      questionNumber: 24,
+      question: "I would enjoy working in music production or sound engineering.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Bodily-Kinesthetic Intelligence (Questions 25-30)
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 25,
+      question: "I enjoy sports, dance, or other physical activities.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 26,
+      question: "I learn new physical skills quickly.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 27,
+      question: "I prefer hands-on work over purely theoretical tasks.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 28,
+      question: "I have good coordination and balance.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 29,
+      question: "I enjoy creating things with my hands.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'bodily-kinesthetic',
+      questionNumber: 30,
+      question: "I would consider a career in performing arts, sports, or physical therapy.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Interpersonal Intelligence (Questions 31-36)
+    {
+      domain: 'interpersonal',
+      questionNumber: 31,
+      question: "I find it easy to connect with new people.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'interpersonal',
+      questionNumber: 32,
+      question: "People often seek my advice for personal or emotional matters.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'interpersonal',
+      questionNumber: 33,
+      question: "I feel comfortable leading a team or group project.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'interpersonal',
+      questionNumber: 34,
+      question: "I work well in collaborative environments.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'interpersonal',
+      questionNumber: 35,
+      question: "I enjoy helping others succeed.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'interpersonal',
+      questionNumber: 36,
+      question: "I would enjoy a career in teaching, counseling, or public relations.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Intrapersonal Intelligence (Questions 37-42)
+    {
+      domain: 'intrapersonal',
+      questionNumber: 37,
+      question: "I have a clear sense of my own strengths and weaknesses.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'intrapersonal',
+      questionNumber: 38,
+      question: "I set personal goals and work consistently to achieve them.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'intrapersonal',
+      questionNumber: 39,
+      question: "I am comfortable spending time alone to think and reflect.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'intrapersonal',
+      questionNumber: 40,
+      question: "I analyze my emotions and motivations often.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'intrapersonal',
+      questionNumber: 41,
+      question: "I prefer working independently over in groups.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'intrapersonal',
+      questionNumber: 42,
+      question: "I would enjoy a career involving deep reflection or personal development.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Naturalistic Intelligence (Questions 43-48)
+    {
+      domain: 'naturalistic',
+      questionNumber: 43,
+      question: "I enjoy spending time in nature.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'naturalistic',
+      questionNumber: 44,
+      question: "I can identify plants, animals, or natural patterns easily.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'naturalistic',
+      questionNumber: 45,
+      question: "I care deeply about environmental issues.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'naturalistic',
+      questionNumber: 46,
+      question: "I enjoy outdoor activities like hiking or gardening.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'naturalistic',
+      questionNumber: 47,
+      question: "I prefer real-world nature experiences over digital entertainment.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'naturalistic',
+      questionNumber: 48,
+      question: "I would enjoy a career in biology, environmental science, or agriculture.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Emotional Intelligence (Questions 49-54)
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 49,
+      question: "I can easily recognize emotions in others from expressions or tone.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 50,
+      question: "I stay calm under pressure and manage my emotions well.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 51,
+      question: "I can resolve conflicts between people effectively.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 52,
+      question: "I adapt my communication style depending on who I speak to.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 53,
+      question: "I understand how my mood impacts my decisions.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'emotional-intelligence',
+      questionNumber: 54,
+      question: "I would enjoy a career in leadership, negotiation, or customer relations.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Creative/Innovative Intelligence (Questions 55-60)
+    {
+      domain: 'creative-innovative',
+      questionNumber: 55,
+      question: "I enjoy brainstorming new ideas or projects.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'creative-innovative',
+      questionNumber: 56,
+      question: "People say I \"think outside the box.\"",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'creative-innovative',
+      questionNumber: 57,
+      question: "I enjoy designing or inventing new solutions.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'creative-innovative',
+      questionNumber: 58,
+      question: "I adapt easily when plans change suddenly.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'creative-innovative',
+      questionNumber: 59,
+      question: "I like combining ideas from different fields to make something unique.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'creative-innovative',
+      questionNumber: 60,
+      question: "I would enjoy a career in entrepreneurship, product design, or arts.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Analytical Intelligence (Questions 61-66)
+    {
+      domain: 'analytical',
+      questionNumber: 61,
+      question: "I prefer structured, fact-based problem solving.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'analytical',
+      questionNumber: 62,
+      question: "I analyze pros and cons before making decisions.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'analytical',
+      questionNumber: 63,
+      question: "I enjoy academic research and technical reading.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'analytical',
+      questionNumber: 64,
+      question: "I often spot errors or inconsistencies others miss.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'analytical',
+      questionNumber: 65,
+      question: "I enjoy comparing multiple solutions to find the best one.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'analytical',
+      questionNumber: 66,
+      question: "I would enjoy a career as a researcher, data scientist, or auditor.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    // Practical Intelligence (Questions 67-72)
+    {
+      domain: 'practical',
+      questionNumber: 67,
+      question: "I quickly figure out how to apply theory to real-life problems.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'practical',
+      questionNumber: 68,
+      question: "I am good at organizing events or managing logistics.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'practical',
+      questionNumber: 69,
+      question: "I can fix or troubleshoot things without formal training.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'practical',
+      questionNumber: 70,
+      question: "I adapt easily to changing situations.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'practical',
+      questionNumber: 71,
+      question: "I am comfortable making quick decisions under pressure.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
+    },
+    {
+      domain: 'practical',
+      questionNumber: 72,
+      question: "I would enjoy a career in management, operations, or event planning.",
+      options: [
+        { text: "Strongly Agree", value: "A", score: 5 },
+        { text: "Agree", value: "B", score: 4 },
+        { text: "Neutral", value: "C", score: 3 },
+        { text: "Disagree", value: "D", score: 2 },
+        { text: "Strongly Disagree", value: "E", score: 1 }
+      ]
     }
-    // Note: For brevity, I'm including first 12 questions. The full 72 questions would follow the same pattern
   ];
 
   const assessment = new Assessment({
