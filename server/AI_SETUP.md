@@ -15,7 +15,7 @@ This CareerCompass application now includes AI-powered career recommendations us
 - **Provider**: Google AI
 - **Model**: Gemini Pro
 - **Setup**: Get API key from https://makersuite.google.com/app/apikey
-- **Environment Variable**: `AIzaSyBp70f_7T6RW9Kntq2R30fgXWPxL3Nvdko`
+- **Environment Variable**: ``
 
 ### 3. Anthropic Claude
 - **Provider**: Anthropic
@@ -31,7 +31,7 @@ Add the following to your `.env` file in the server directory:
 ```bash
 # AI API Keys
 OPENAI_API_KEY=your_openai_api_key_here
-GEMINI_API_KEY=AIzaSyBp70f_7T6RW9Kntq2R30fgXWPxL3Nvdko
+GEMINI_API_KEY=
 CLAUDE_API_KEY=your_claude_api_key_here
 
 # AI Configuration
