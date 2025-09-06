@@ -117,6 +117,7 @@ router.post('/submit', isAuthenticated, async (req, res) => {
 
     res.json({
       success: true,
+      resultId: testResult._id,
       result: {
         totalScore,
         maxPossibleScore: maxPossibleScore,
@@ -195,6 +196,269 @@ router.post('/reset', isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error resetting assessment:', error);
     res.status(500).json({ error: 'Failed to reset assessment' });
+  }
+});
+
+// Test PDF generation
+router.get('/test-pdf', (req, res) => {
+  try {
+    console.log('Testing PDF generation...');
+    
+    // Create a simple HTML response for now
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Career Assessment Results</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .section { margin-bottom: 20px; }
+            .score { font-size: 24px; font-weight: bold; color: #2563eb; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Career Assessment Results</h1>
+            <p>Test PDF Generation</p>
+        </div>
+        <div class="section">
+            <h2>Test Content</h2>
+            <p>This is a test PDF generation to verify the system is working.</p>
+            <p>If you can see this, the PDF generation is working correctly!</p>
+        </div>
+    </body>
+    </html>
+    `;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+    
+    console.log('Test HTML sent successfully');
+  } catch (error) {
+    console.error('Error in test PDF:', error);
+    res.status(500).json({ error: 'Test PDF failed: ' + error.message });
+  }
+});
+
+// Generate PDF for assessment results
+router.get('/results/:resultId/pdf', isAuthenticated, async (req, res) => {
+  try {
+    console.log('PDF generation requested for result:', req.params.resultId);
+    
+    const { resultId } = req.params;
+    const result = await StudentTestResult.findById(resultId)
+      .populate('assessmentId', 'title description');
+    
+    if (!result) {
+      console.log('Result not found:', resultId);
+      return res.status(404).json({ error: 'Result not found' });
+    }
+
+    // Check if user owns this result
+    if (result.studentId !== req.user.id) {
+      console.log('Access denied for user:', req.user.id);
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    console.log('Generating HTML for result:', result._id);
+    
+    // Domain names mapping
+    const domainNames = {
+      'logical-mathematical': 'Logical-Mathematical Intelligence',
+      'linguistic-verbal': 'Linguistic-Verbal Intelligence',
+      'visual-spatial': 'Visual-Spatial Intelligence',
+      'musical-rhythmic': 'Musical-Rhythmic Intelligence',
+      'bodily-kinesthetic': 'Bodily-Kinesthetic Intelligence',
+      'interpersonal': 'Interpersonal Intelligence',
+      'intrapersonal': 'Intrapersonal Intelligence',
+      'naturalistic': 'Naturalistic Intelligence',
+      'emotional-intelligence': 'Emotional Intelligence',
+      'creative-innovative': 'Creative-Innovative Intelligence',
+      'analytical': 'Analytical Intelligence',
+      'practical': 'Practical Intelligence'
+    };
+
+    // Generate HTML content
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Career Assessment Results</title>
+        <meta charset="UTF-8">
+        <style>
+            @media print {
+                body { margin: 0; }
+                .no-print { display: none; }
+            }
+            body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                line-height: 1.6;
+                color: #333;
+            }
+            .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                border-bottom: 2px solid #2563eb;
+                padding-bottom: 20px;
+            }
+            .section { 
+                margin-bottom: 25px; 
+                page-break-inside: avoid;
+            }
+            .score { 
+                font-size: 24px; 
+                font-weight: bold; 
+                color: #2563eb; 
+            }
+            .domain-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 15px;
+                margin: 20px 0;
+            }
+            .domain-item {
+                border: 1px solid #e5e7eb;
+                padding: 15px;
+                border-radius: 8px;
+                background: #f9fafb;
+            }
+            .domain-score {
+                font-weight: bold;
+                color: #059669;
+            }
+            .recommendation {
+                background: #eff6ff;
+                padding: 10px;
+                margin: 8px 0;
+                border-left: 4px solid #2563eb;
+                border-radius: 4px;
+            }
+            .ai-analysis {
+                background: #f0fdf4;
+                padding: 15px;
+                border: 1px solid #bbf7d0;
+                border-radius: 8px;
+                margin: 15px 0;
+            }
+            .print-button {
+                background: #2563eb;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                margin: 20px 0;
+            }
+            .print-button:hover {
+                background: #1d4ed8;
+            }
+            h1 { color: #1f2937; }
+            h2 { color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            h3 { color: #4b5563; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🎯 Career Assessment Results</h1>
+            <p><strong>Assessment:</strong> ${result.assessmentId.title}</p>
+            <p><strong>Completed:</strong> ${new Date(result.completedAt).toLocaleDateString()}</p>
+            <div class="score">Total Score: ${result.totalScore}/${result.maxPossibleScore} (${result.percentage}%)</div>
+        </div>
+
+        <div class="no-print">
+            <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 Domain Analysis</h2>
+            <div class="domain-grid">
+                ${Object.entries(result.domainScores).map(([domain, score]) => `
+                    <div class="domain-item">
+                        <h3>${domainNames[domain]}</h3>
+                        <div class="domain-score">${score}/30 points</div>
+                        <div>${score >= 24 ? 'Excellent' : score >= 18 ? 'Good' : score >= 12 ? 'Average' : 'Needs Improvement'}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        ${result.topDomains && result.topDomains.length > 0 ? `
+        <div class="section">
+            <h2>🏆 Top Strengths</h2>
+            <ol>
+                ${result.topDomains.map((domain, index) => `
+                    <li><strong>${domainNames[domain]}</strong> - ${result.domainScores[domain]}/30 points</li>
+                `).join('')}
+            </ol>
+        </div>
+        ` : ''}
+
+        ${result.recommendations && result.recommendations.length > 0 ? `
+        <div class="section">
+            <h2>💡 Recommendations</h2>
+            ${result.recommendations.map(rec => `
+                <div class="recommendation">${rec}</div>
+            `).join('')}
+        </div>
+        ` : ''}
+
+        ${result.aiAnalysis ? `
+        <div class="section">
+            <h2>🤖 AI-Powered Analysis</h2>
+            <div class="ai-analysis">
+                ${result.aiAnalysis.analysis ? `
+                    <h3>Overall Analysis</h3>
+                    <p><strong>Strengths:</strong> ${result.aiAnalysis.analysis.overall_strengths || 'Not available'}</p>
+                    <p><strong>Personality Type:</strong> ${result.aiAnalysis.analysis.personality_type || 'Not available'}</p>
+                    <p><strong>Learning Style:</strong> ${result.aiAnalysis.analysis.learning_style || 'Not available'}</p>
+                    <p><strong>Work Environment:</strong> ${result.aiAnalysis.analysis.work_environment_preference || 'Not available'}</p>
+                ` : ''}
+                
+                ${result.aiAnalysis.career_recommendations ? `
+                    <h3>Career Recommendations</h3>
+                    <h4>Primary Careers:</h4>
+                    <ul>
+                        ${result.aiAnalysis.career_recommendations.primary_careers?.map(career => `
+                            <li><strong>${career.title}</strong> - ${career.description}</li>
+                        `).join('') || '<li>No primary careers available</li>'}
+                    </ul>
+                    
+                    ${result.aiAnalysis.career_recommendations.secondary_careers?.length > 0 ? `
+                    <h4>Secondary Careers:</h4>
+                    <ul>
+                        ${result.aiAnalysis.career_recommendations.secondary_careers.map(career => `
+                            <li><strong>${career.title}</strong> - ${career.description}</li>
+                        `).join('')}
+                    </ul>
+                    ` : ''}
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+
+        <div class="section">
+            <h2>📋 Assessment Details</h2>
+            <p><strong>Assessment ID:</strong> ${resultId}</p>
+            <p><strong>Time Taken:</strong> ${result.timeTaken || 'N/A'} minutes</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+    </body>
+    </html>
+    `;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+    
+    console.log('HTML generated and sent successfully');
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
   }
 });
 

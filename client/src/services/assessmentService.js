@@ -30,7 +30,8 @@ export const assessmentService = {
       throw new Error(error.error || 'Failed to submit assessment');
     }
     
-    return response.json();
+    const data = await response.json();
+    return data;
   },
 
   // Get student's test results
@@ -72,6 +73,13 @@ export const assessmentService = {
     }
     
     return response.json();
+  },
+
+  // Download PDF for assessment results
+  async downloadPDF(resultId) {
+    // Open the PDF page in a new tab
+    const url = `${API_BASE_URL}/assessments/results/${resultId}/pdf`;
+    window.open(url, '_blank');
   }
 };
 

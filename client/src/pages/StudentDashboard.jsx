@@ -13,13 +13,16 @@ export default function StudentDashboard() {
   const [showAssessment, setShowAssessment] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [assessmentResults, setAssessmentResults] = useState(null);
+  const [assessmentResultId, setAssessmentResultId] = useState(null);
   const [studentProfile, setStudentProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [previousResults, setPreviousResults] = useState([]);
 
   useEffect(() => {
     loadStudentProfile();
     loadUserData();
+    loadPreviousResults();
   }, []);
 
   const loadUserData = () => {
@@ -43,6 +46,16 @@ export default function StudentDashboard() {
       setStudentProfile(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPreviousResults = async () => {
+    try {
+      const results = await assessmentService.getTestResults();
+      setPreviousResults(results);
+    } catch (error) {
+      console.log("No previous results found");
+      setPreviousResults([]);
     }
   };
 
@@ -73,10 +86,13 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleAssessmentComplete = (results) => {
+  const handleAssessmentComplete = (results, resultId) => {
     setAssessmentResults(results);
+    setAssessmentResultId(resultId);
     setShowAssessment(false);
     setShowResults(true);
+    // Reload previous results to include the new one
+    loadPreviousResults();
   };
 
   const handleAssessmentCancel = () => {
@@ -91,6 +107,19 @@ export default function StudentDashboard() {
   const handleBackToDashboard = () => {
     setShowResults(false);
     setAssessmentResults(null);
+    setAssessmentResultId(null);
+  };
+
+  const handleViewResult = async (resultId) => {
+    try {
+      const result = await assessmentService.getTestResult(resultId);
+      setAssessmentResults(result);
+      setAssessmentResultId(resultId);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error loading result:', error);
+      alert('Failed to load result: ' + error.message);
+    }
   };
 
   const handleLogout = () => {
@@ -131,6 +160,7 @@ export default function StudentDashboard() {
     return (
       <AssessmentResults
         results={assessmentResults}
+        resultId={assessmentResultId}
         onRetake={handleRetakeAssessment}
         onBack={handleBackToDashboard}
       />
@@ -400,6 +430,75 @@ export default function StudentDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Previous Results Section */}
+        {previousResults.length > 0 && (
+          <div className="mb-16">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full px-4 py-2 mb-4">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">Previous Results</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">Your Assessment History</h3>
+              <p className="text-gray-600 max-w-2xl mx-auto">View and download your previous assessment results</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {previousResults.map((result, index) => (
+                <div key={result._id} className="group relative bg-gradient-to-br from-white via-purple-50/30 to-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-purple-100/50 overflow-hidden">
+                  {/* Background Pattern */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-100/20 to-transparent rounded-full -translate-y-10 translate-x-10"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-blue-100/20 to-transparent rounded-full translate-y-8 -translate-x-8"></div>
+                  
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-purple-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <FiTarget className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-purple-600">{result.percentage}%</div>
+                        <div className="text-sm text-gray-500">Score</div>
+                      </div>
+                    </div>
+                    
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">
+                      Assessment #{previousResults.length - index}
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Completed: {new Date(result.completedAt).toLocaleDateString()}
+                    </p>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Total Score:</span>
+                        <span className="font-semibold">{result.totalScore}/{result.maxPossibleScore}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Time Taken:</span>
+                        <span className="font-semibold">{result.timeTaken || 'N/A'} min</span>
+                      </div>
+                      {result.hasAIAnalysis && (
+                        <div className="flex items-center gap-1 text-sm text-green-600">
+                          <span>🤖</span>
+                          <span>AI Analysis Available</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleViewResult(result._id)}
+                        className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 py-2 rounded-xl font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                      >
+                        View Results
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="mb-16">

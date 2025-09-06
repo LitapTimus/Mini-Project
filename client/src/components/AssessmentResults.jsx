@@ -1,6 +1,7 @@
 import React from 'react';
+import { assessmentService } from '../services/assessmentService';
 
-export default function AssessmentResults({ results, onRetake, onBack }) {
+export default function AssessmentResults({ results, onRetake, onBack, resultId }) {
   const getDomainDisplayName = (domain) => {
     const domainNames = {
       'logical-mathematical': 'Logical-Mathematical Intelligence',
@@ -51,6 +52,20 @@ export default function AssessmentResults({ results, onRetake, onBack }) {
     return icons[domain] || '❓';
   };
 
+  const handleDownloadPDF = async () => {
+    if (!resultId) {
+      alert('Result ID not available for PDF download');
+      return;
+    }
+    
+    try {
+      await assessmentService.downloadPDF(resultId);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF: ' + error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
@@ -96,6 +111,13 @@ export default function AssessmentResults({ results, onRetake, onBack }) {
 
           {/* Action Buttons */}
           <div className="flex justify-center space-x-4">
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              <span>📄</span>
+              Download PDF
+            </button>
             <button
               onClick={onRetake}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"

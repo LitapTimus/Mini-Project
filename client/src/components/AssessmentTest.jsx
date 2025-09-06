@@ -58,7 +58,7 @@ export default function AssessmentTest({ onComplete, onCancel }) {
       const timeTaken = Math.round((Date.now() - startTime) / 60000); // Convert to minutes
       
       const result = await assessmentService.submitAssessment(answers, timeTaken);
-      onComplete(result.result);
+      onComplete(result.result, result.resultId);
     } catch (error) {
       setError('Failed to submit assessment: ' + error.message);
     } finally {
