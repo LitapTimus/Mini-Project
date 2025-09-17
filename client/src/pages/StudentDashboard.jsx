@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiBookOpen, FiTarget, FiUsers, FiTrendingUp, FiLogOut, FiEdit3, FiCheckCircle, FiArrowRight, FiActivity } from "react-icons/fi";
 import StudentProfileForm from "../components/StudentProfileForm";
+import SessionScheduler from "../components/SessionScheduler";
 import AssessmentTest from "../components/AssessmentTest";
 import AssessmentResults from "../components/AssessmentResults";
 import { studentService } from "../services/studentService";
@@ -18,11 +19,14 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [previousResults, setPreviousResults] = useState([]);
+  const [mySessions, setMySessions] = useState([]);
+  const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
     loadStudentProfile();
     loadUserData();
     loadPreviousResults();
+    loadMySessions();
   }, []);
 
   const loadUserData = () => {
@@ -56,6 +60,15 @@ export default function StudentDashboard() {
     } catch (error) {
       console.log("No previous results found");
       setPreviousResults([]);
+    }
+  };
+
+  const loadMySessions = async () => {
+    try {
+      const sessions = await studentService.getMySessions();
+      setMySessions(sessions);
+    } catch (_e) {
+      setMySessions([]);
     }
   };
 
@@ -130,6 +143,11 @@ export default function StudentDashboard() {
     navigate("/");
   };
 
+  const handleSessionScheduled = (_session) => {
+    setShowScheduler(false);
+    alert('Session scheduled successfully');
+  };
+
   const handleResetAssessment = async () => {
     if (window.confirm("Are you sure you want to reset the assessment? This will update it to include all 72 questions across 12 domains.")) {
       try {
@@ -190,6 +208,13 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Show session scheduler
+  if (showScheduler) {
+    return (
+      <SessionScheduler onClose={() => setShowScheduler(false)} onSessionScheduled={handleSessionScheduled} />
     );
   }
 
@@ -607,10 +632,13 @@ export default function StudentDashboard() {
                   </div>
                 </div>
                 
-                <div className="flex items-center text-purple-600 font-semibold group-hover:text-purple-700 transition-colors">
-                  <span>Find mentors</span>
+                <button
+                  onClick={() => setShowScheduler(true)}
+                  className="mt-2 inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700 transition-colors"
+                >
+                  <span>Schedule a session</span>
                   <FiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -641,6 +669,33 @@ export default function StudentDashboard() {
               <span className="text-purple-600 text-sm ml-auto font-medium">Ready</span>
             </div>
           </div>
+        </div>
+
+        {/* My Sessions */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-gray-900">My Sessions</h3>
+          </div>
+          {mySessions.length === 0 ? (
+            <p className="text-gray-600">No sessions yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {mySessions.map((s) => (
+                <div key={s._id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-900">{s.mentorSnapshot?.name || s.mentor?.name || 'Mentor'}</div>
+                      <div className="text-sm text-gray-600">{s.topic}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-xs px-2 py-1 rounded-full inline-block ${s.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : s.status === 'scheduled' ? 'bg-green-100 text-green-800' : s.status === 'declined' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>{s.status}</div>
+                      <div className="text-xs text-gray-500 mt-1">{new Date(s.scheduledTime).toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>

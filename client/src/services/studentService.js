@@ -1,6 +1,46 @@
 const API_BASE_URL = 'http://localhost:3000/api';
+const AUTH_BASE_URL = API_BASE_URL.replace('/api', '');
+
+async function ensureStudentRoleOnServer() {
+  try {
+    const whoAmI = await fetch(`${AUTH_BASE_URL}/auth/user`, { credentials: 'include', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
+    if (whoAmI.ok) {
+      const me = await whoAmI.json();
+      if (me && me.role === 'student') return;
+    }
+  } catch (_e) {
+    // continue to attempt role set
+  }
+
+  // Attempt to set role to student on the server session (mirrors mentorService behavior)
+  const selectedRole = localStorage.getItem('selectedRole');
+  if (selectedRole === 'student') {
+    await fetch(`${AUTH_BASE_URL}/auth/role`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'student' })
+    });
+  }
+}
 
 export const studentService = {
+  // Create session as student
+  async createSession({ mentorId, scheduledTime, duration, type, topic, description }) {
+    // Make sure the server session reflects the student's role
+    await ensureStudentRoleOnServer();
+    const response = await fetch(`${API_BASE_URL}/sessions/student`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mentorId, scheduledTime, duration, type, topic, description })
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || 'Failed to create session');
+    }
+    return await response.json();
+  },
   // Get current student's profile
   async getProfile() {
     try {
@@ -135,6 +175,24 @@ export const studentService = {
       return await response.json();
     } catch (error) {
       console.error('Error fetching student:', error);
+      throw error;
+    }
+  }
+  ,
+  async getMySessions() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/sessions/student/me`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch sessions');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching student sessions:', error);
       throw error;
     }
   }
