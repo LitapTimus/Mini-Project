@@ -5,6 +5,13 @@ import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect, useCallback } from "react";
 import LoadingScreen from "../components/LoadingScreen";
+import InterviewStart from "../pages/InterviewStart";
+import InterviewWorkspace from "../pages/InterviewWorkspace";
+import InterviewSummary from "../pages/InterviewSummary";
+import Jobs from "../pages/Jobs";
+import RecruiterJobs from "../pages/RecruiterJobs";
+import RecruiterCompany from "../pages/RecruiterCompany";
+import RecruiterApplicants from "../pages/RecruiterApplicants";
 
 export default function AppRoutes() {
   const [user, setUser] = useState(null);
@@ -51,6 +58,19 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        {/* AI Interview flow (public for now) */}
+        <Route path="/interview" element={<InterviewStart />} />
+        <Route path="/interview/session/:sessionId/question" element={<InterviewWorkspace />} />
+        <Route path="/interview/session/:sessionId/summary" element={<InterviewSummary />} />
+
+        {/* Jobs board visible to students */}
+        <Route path="/jobs" element={<Jobs />} />
+
+        {/* Recruiter tools */}
+        <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
+        <Route path="/recruiter/company" element={<RecruiterCompany />} />
+        <Route path="/recruiter/applicants" element={<RecruiterApplicants />} />
       </Routes>
     </BrowserRouter>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import StudentDashboard from "./StudentDashboard";
 import MentorDashboard from "./MentorDashboard";
 import RecruiterDashboard from "./RecruiterDashboard";
+import Footer from "../components/Footer";
 
 export default function Dashboard() {
   const [selectedRole, setSelectedRole] = useState(null);
@@ -24,7 +25,7 @@ export default function Dashboard() {
           <p className="text-gray-600 mb-6">
             Please select your role to continue to your personalized dashboard.
           </p>
-          <button 
+          <button
             onClick={() => navigate("/role-selection")}
             className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
           >
@@ -35,7 +36,7 @@ export default function Dashboard() {
     );
   }
 
-    // Render role-specific dashboard content
+  // Render role-specific dashboard content
   if (selectedRole === "student") {
     console.log("Rendering StudentDashboard");
     return <StudentDashboard />;
@@ -53,21 +54,27 @@ export default function Dashboard() {
 
   // For any other roles, show a placeholder
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-4 text-gray-900">
-          {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Dashboard
-        </h1>
-        <p className="text-gray-600 mb-6">
-          {selectedRole} dashboard is coming soon!
-        </p>
-        <button 
-          onClick={() => navigate("/role-selection")}
-          className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Change Role
-        </button>
+    <>
+      <div className="min-h-screen flex flex-col justify-between bg-gray-50">
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-8">
+            <h1 className="text-2xl font-bold mb-4 text-gray-900">
+              {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}{" "}
+              Dashboard
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {selectedRole} dashboard is coming soon!
+            </p>
+            <button
+              onClick={() => navigate("/role-selection")}
+              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Change Role
+            </button>
+          </div>
+        </div>
+        <Footer />
       </div>
-    </div>
+    </>
   );
 }

@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { FiUser, FiBookOpen, FiTarget, FiUsers, FiTrendingUp, FiLogOut, FiEdit3, FiCheckCircle, FiArrowRight, FiActivity } from "react-icons/fi";
 import StudentProfileForm from "../components/StudentProfileForm";
 import SessionScheduler from "../components/SessionScheduler";
-import SessionScheduler from "../components/SessionScheduler";
 import AssessmentTest from "../components/AssessmentTest";
 import AssessmentResults from "../components/AssessmentResults";
 import { studentService } from "../services/studentService";
 import { assessmentService } from "../services/assessmentService";
+import { recruiterService } from "../services/recruiterService";
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [previousResults, setPreviousResults] = useState([]);
+  const [applications, setApplications] = useState([]);
 
   const getDisplayName = () => {
     const name = user?.displayName || user?.name || user?.given_name || user?.fullName;
@@ -37,6 +38,7 @@ export default function StudentDashboard() {
     loadPreviousResults();
     loadMySessions();
     loadMySessions();
+    loadApplications();
   }, []);
 
   const loadUserData = () => {
@@ -70,6 +72,17 @@ export default function StudentDashboard() {
     } catch (error) {
       console.log("No previous results found");
       setPreviousResults([]);
+    }
+  };
+
+  const loadApplications = async () => {
+    try {
+      const email = JSON.parse(localStorage.getItem('user'))?.email;
+      if (!email) return;
+      const apps = await recruiterService.getApplicationsByEmail(email);
+      setApplications(apps || []);
+    } catch (_e) {
+      setApplications([]);
     }
   };
 
@@ -756,10 +769,13 @@ export default function StudentDashboard() {
                     <span>Track applications</span>
                   </div>
                 </div>
-                <div className="flex items-center text-amber-600 font-semibold group-hover:text-amber-700 transition-colors">
+                <button
+                  onClick={() => navigate('/jobs')}
+                  className="flex items-center text-amber-600 font-semibold group-hover:text-amber-700 transition-colors"
+                >
                   <span>Start applying</span>
                   <FiArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -836,6 +852,45 @@ export default function StudentDashboard() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* My Applications */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-gray-900">My Job Applications</h3>
+          </div>
+          {applications.length === 0 ? (
+            <p className="text-gray-600">You haven't applied to any jobs yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-2">Job</th>
+                    <th className="p-2">Email</th>
+                    <th className="p-2">Resume</th>
+                    <th className="p-2">Applied</th>
+                    <th className="p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map(a => (
+                    <tr key={a._id} className="border-b">
+                      <td className="p-2">{a.jobId?.title || 'Job'}</td>
+                      <td className="p-2">{a.email}</td>
+                      <td className="p-2 text-blue-600"><a href={a.resumeUrl} target="_blank" rel="noreferrer">View</a></td>
+                      <td className="p-2">{new Date(a.appliedAt).toLocaleString()}</td>
+                      <td className="p-2 capitalize">
+                        {a.status === 'shortlisted' && <span className="text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs">Shortlisted</span>}
+                        {a.status === 'rejected' && <span className="text-red-700 bg-red-100 px-2 py-1 rounded-full text-xs">Rejected</span>}
+                        {a.status === 'applied' && <span className="text-gray-700 bg-gray-100 px-2 py-1 rounded-full text-xs">Applied</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* My Sessions */}

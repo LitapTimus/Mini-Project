@@ -17,6 +17,7 @@ export default function LandingPage() {
         <ArrowScroll />
         <FeaturesSection />
         <TestimonialsSection />
+        <Footer/>
       </div>
     </div>
   );

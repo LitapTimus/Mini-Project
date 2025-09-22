@@ -1,15 +1,15 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function RecruiterDashboard() {
+  const navigate = useNavigate();
   return (
     <div className="bg-gray-50 text-gray-800 min-h-screen">
       {/* Navbar */}
       <nav className="bg-white shadow p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">CareerCompass</h1>
         <div className="space-x-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-            Post Job
-          </button>
+          <button onClick={()=>navigate('/recruiter/jobs')} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Post Job</button>
           <button className="bg-gray-200 px-4 py-2 rounded-lg">Logout</button>
         </div>
       </nav>
@@ -20,32 +20,11 @@ export default function RecruiterDashboard() {
         <aside className="bg-white shadow rounded-lg p-4 col-span-1 space-y-4">
           <h2 className="font-bold text-lg">Menu</h2>
           <ul className="space-y-2">
-            <li>
-              <a href="#" className="block p-2 rounded hover:bg-blue-50">
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block p-2 rounded hover:bg-blue-50">
-                Posted Jobs
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block p-2 rounded hover:bg-blue-50">
-                Applicants
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block p-2 rounded hover:bg-blue-50">
-                Company Profile
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block p-2 rounded hover:bg-blue-50">
-                Messages
-              </a>
-            </li>
-          </ul>
+            <li><button onClick={()=>navigate('/dashboard')} className="w-full text-left p-2 rounded hover:bg-blue-50">Dashboard</button></li>
+            <li><button onClick={()=>navigate('/recruiter/jobs')} className="w-full text-left p-2 rounded hover:bg-blue-50">Posted Jobs</button></li>
+            <li><button onClick={()=>navigate('/recruiter/applicants')} className="w-full text-left p-2 rounded hover:bg-blue-50">Applicants</button></li>
+            <li><button onClick={()=>navigate('/recruiter/company')} className="w-full text-left p-2 rounded hover:bg-blue-50">Company Profile</button></li>
+           </ul>
         </aside>
 
         {/* Main Content */}

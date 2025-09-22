@@ -315,6 +315,7 @@ const authCheck = (req, res, next) => {
 
 // API routes
 app.use('/api', routes);
+app.use('/api/recruiter', require('./routes/recruiter'));
 app.use('/api/students', studentRoutes);
 app.use('/api/mentors', authCheck, mentorRoutes);
 app.use('/api/assessments', assessmentRoutes);

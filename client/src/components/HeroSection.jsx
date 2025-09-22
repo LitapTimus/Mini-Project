@@ -57,7 +57,6 @@ export default function HeroSection() {
                 <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text  text-transparent">
                   Career Journey
                 </span>
-                <div className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-green-200 to-blue-200 -skew-x-12 opacity-30"></div>
               </span>{" "}
               with Confidence
             </h1>
