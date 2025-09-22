@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiUser, FiBookOpen, FiTarget, FiUsers, FiTrendingUp, FiLogOut, FiEdit3, FiCheckCircle, FiArrowRight, FiActivity } from "react-icons/fi";
 import StudentProfileForm from "../components/StudentProfileForm";
 import SessionScheduler from "../components/SessionScheduler";
+import SessionScheduler from "../components/SessionScheduler";
 import AssessmentTest from "../components/AssessmentTest";
 import AssessmentResults from "../components/AssessmentResults";
 import { studentService } from "../services/studentService";
@@ -34,6 +35,7 @@ export default function StudentDashboard() {
     loadStudentProfile();
     loadUserData();
     loadPreviousResults();
+    loadMySessions();
     loadMySessions();
   }, []);
 
@@ -70,6 +72,8 @@ export default function StudentDashboard() {
       setPreviousResults([]);
     }
   };
+
+  
 
   const loadMySessions = async () => {
     try {
@@ -151,6 +155,7 @@ export default function StudentDashboard() {
     navigate("/");
   };
 
+ 
   const handleSessionScheduled = (_session) => {
     setShowScheduler(false);
     alert('Session scheduled successfully');
@@ -216,6 +221,13 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Show session scheduler
+  if (showScheduler) {
+    return (
+      <SessionScheduler onClose={() => setShowScheduler(false)} onSessionScheduled={handleSessionScheduled} />
     );
   }
 
