@@ -2,11 +2,15 @@ import React from "react";
 import { FiBookOpen, FiUsers, FiBriefcase } from "react-icons/fi";
 
 export default function RoleSelection() {
-  const handleRoleSelect = (role) => {
-    // Store selected role in localStorage
-    localStorage.setItem("selectedRole", role);
-    // Redirect to regular Google OAuth
-    window.location.href = "http://localhost:3000/auth/google";
+  const handleRoleSelect = async (role) => {
+    try {
+      // Store selected role in localStorage
+      localStorage.setItem("selectedRole", role);
+      // Redirect to regular Google OAuth with role in query parameter
+      window.location.href = `http://localhost:3000/auth/google?role=${role}`;
+    } catch (error) {
+      console.error('Error in role selection:', error);
+    }
   };
 
   const roles = [

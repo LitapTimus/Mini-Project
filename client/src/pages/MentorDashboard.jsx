@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import MentorProfileForm from "../components/MentorProfileForm";
+import SessionScheduler from "../components/SessionScheduler";
+import MessagesList from "../components/MessagesList";
+import ChatInterface from "../components/ChatInterface";
 import {
   Search,
-  Filter,
   Calendar,
   MessageCircle,
   Users,
@@ -13,32 +16,80 @@ import {
   Plus,
   Bell,
   Settings,
-  LogOut,
   ChevronDown,
   MapPin,
-  GraduationCap,
-  Briefcase,
   Star,
+  AlertCircle,
 } from "lucide-react";
+import MentorService from "../services/mentorService";
+import LoadingScreen from "../components/LoadingScreen";
 
 const MentorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showSessionScheduler, setShowSessionScheduler] = useState(false);
+  
+  // State for all data
+  const [mentor, setMentor] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Sample mentor data
-  const mentor = {
-    name: "Dr. Sarah Johnson",
-    title: "Senior Software Engineering Mentor",
-    avatar:
-      "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-    rating: 4.9,
-    totalStudents: 45,
-    yearsExperience: 8,
-  };
+  // Fetch all data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('Starting to fetch mentor dashboard data...');
+        setLoading(true);
+        const [
+          mentorProfile,
+          mentorStudents,
+          upcomingSessions,
+          recentMessages,
+          mentorStats,
+          pendingSessions
+        ] = await Promise.all([
+          MentorService.getMentorProfile(),
+          MentorService.getMentorStudents(),
+          MentorService.getUpcomingSessions(),
+          MentorService.getRecentMessages(),
+          MentorService.getMentorStats(),
+          MentorService.getPendingSessions()
+        ]);
 
-  // Sample students data
-  const students = [
+        console.log('Fetched data:', { mentorProfile, mentorStudents, upcomingSessions, recentMessages, mentorStats });
+        setMentor(mentorProfile);
+        setStudents(mentorStudents);
+        setSessions([...pendingSessions, ...upcomingSessions]);
+        setMessages(recentMessages);
+        setStats(mentorStats);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        console.error("Error details:", err.response?.data || err.message);
+        setError("Failed to load dashboard data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // If first login and basic fields missing, open profile form
+  useEffect(() => {
+    if (mentor && (!mentor.title || !mentor.yearsExperience || !mentor.expertise || mentor.expertise.length === 0)) {
+      setShowProfileEdit(true);
+    }
+  }, [mentor]);
+
+  // Students will be loaded from API
+  const [studentsList, setStudentsList] = useState([
     {
       id: 1,
       name: "Alex Chen",
@@ -91,116 +142,89 @@ const MentorDashboard = () => {
       lastActive: "30 minutes ago",
       status: "active",
     },
-  ];
+  ]);
 
-  // Sample upcoming sessions
-  const upcomingSessions = [
-    {
-      id: 1,
-      student: "Alex Chen",
-      time: "2:00 PM Today",
-      topic: "Career Path Discussion",
-      type: "video",
-    },
-    {
-      id: 2,
-      student: "Maria Rodriguez",
-      time: "10:00 AM Tomorrow",
-      topic: "Resume Review",
-      type: "video",
-    },
-    {
-      id: 3,
-      student: "David Kim",
-      time: "3:30 PM Friday",
-      topic: "Technical Interview Prep",
-      type: "video",
-    },
-  ];
+  // Using sessions from API response
 
-  // Sample messages
-  const recentMessages = [
-    {
-      id: 1,
-      student: "Alex Chen",
-      message: "Thank you for the feedback on my portfolio!",
-      time: "10 minutes ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      student: "Emily Zhang",
-      message: "Could we schedule a session for next week?",
-      time: "2 hours ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      student: "Maria Rodriguez",
-      message: "I updated my resume based on your suggestions.",
-      time: "1 day ago",
-      unread: false,
-    },
-  ];
+  // Using messages from API response
 
-  // Summary statistics
-  const stats = [
-    {
-      label: "Total Students",
-      value: "45",
-      change: "+3",
-      icon: Users,
-      color: "blue",
-    },
-    {
-      label: "New Students",
-      value: "8",
-      change: "+2",
-      icon: TrendingUp,
-      color: "green",
-    },
-    {
-      label: "Pending Assessments",
-      value: "12",
-      change: "-1",
-      icon: Award,
-      color: "yellow",
-    },
-    {
-      label: "Upcoming Sessions",
-      value: "7",
-      change: "+1",
-      icon: Clock,
-      color: "purple",
-    },
-  ];
+  // We'll use stats from API response
 
-  // Domain analytics data
-  const domainData = [
-    { domain: "Software Engineering", students: 18, avgScore: 4.2 },
-    { domain: "Product Management", students: 12, avgScore: 4.0 },
-    { domain: "Data Science", students: 8, avgScore: 4.5 },
-    { domain: "UX Design", students: 7, avgScore: 4.3 },
-  ];
+  // Domain analytics will come from the API response
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = students?.filter((student) => {
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.skills.some((skill) =>
-        skill.toLowerCase().includes(searchTerm.toLowerCase())
+      student?.name?.toLowerCase().includes(searchLower) ||
+      student?.skills?.some((skill) =>
+        skill.toLowerCase().includes(searchLower)
       ) ||
-      student.interests.some((interest) =>
-        interest.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      student?.interests?.some((interest) =>
+        interest.toLowerCase().includes(searchLower)
+      ) ||
+      student?.education?.degree?.toLowerCase().includes(searchLower) ||
+      student?.education?.institution?.toLowerCase().includes(searchLower);
 
     const matchesFilter =
-      selectedFilter === "all" || student.status === selectedFilter;
+      selectedFilter === "all" || student?.status === selectedFilter;
 
     return matchesSearch && matchesFilter;
   });
 
+  if (loading) {
+    return <LoadingScreen message="Loading dashboard data..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Profile Edit Modal */}
+      {showProfileEdit && (
+        <MentorProfileForm
+          mentor={mentor}
+          onSubmit={async (data) => {
+            try {
+              const updatedProfile = await MentorService.updateMentorProfile(data);
+              setMentor(updatedProfile);
+              setShowProfileEdit(false);
+            } catch (error) {
+              console.error('Failed to update profile:', error);
+            }
+          }}
+          onCancel={() => setShowProfileEdit(false)}
+        />
+      )}
+
+      {/* Session Scheduler Modal */}
+      {showSessionScheduler && (
+        <SessionScheduler
+          onClose={() => setShowSessionScheduler(false)}
+          onSessionScheduled={(newSession) => {
+            setSessions([...sessions, newSession]);
+            setShowSessionScheduler(false);
+          }}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -259,26 +283,45 @@ const MentorDashboard = () => {
               </button>
             </nav>
 
-            {/* Profile Menu */}
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-              </button>
-
-              <div className="flex items-center space-x-3">
+              {/* Profile Menu */}
+              <div className="flex items-center space-x-4">
+                <button className="relative p-2 text-gray-600 hover:text-gray-900">
+                  <Bell className="w-5 h-5" />
+                  {messages?.some(m => !m.read) && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                  )}
+                </button>              <div className="flex items-center space-x-3 relative group">
                 <img
-                  src={mentor.avatar}
-                  alt={mentor.name}
-                  className="w-8 h-8 rounded-full object-cover"
+                  src={mentor?.avatar || 'https://ui-avatars.com/api/?name=M'}
+                  alt={mentor?.name || 'Mentor'}
+                  className="w-8 h-8 rounded-full object-cover cursor-pointer"
+                  onClick={() => setShowProfileEdit(true)}
                 />
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-gray-900">
-                    {mentor.name}
+                    {mentor?.name || 'Mentor'}
                   </p>
-                  <p className="text-xs text-gray-500">Mentor</p>
+                  <p className="text-xs text-gray-500">{mentor?.title || 'Mentor'}</p>
                 </div>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <ChevronDown className="w-4 h-4 text-gray-500 cursor-pointer" />
+                
+                {/* Profile Dropdown */}
+                <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="py-1">
+                    <button
+                      onClick={() => setShowProfileEdit(true)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setShowSessionScheduler(true)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      Schedule Session
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -294,26 +337,26 @@ const MentorDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold mb-2">
-                    Welcome back, Dr. Johnson! 👋
+                    Welcome back, {mentor?.name || 'Mentor'}! 👋
                   </h1>
                   <p className="text-blue-100 text-lg">
-                    You have 3 sessions scheduled today and 5 new messages
+                    You have {sessions?.length || 0} sessions scheduled today and {messages?.filter(m => m.unread).length || 0} new messages
                   </p>
                 </div>
                 <div className="hidden md:flex items-center space-x-6 text-center">
                   <div>
-                    <div className="text-2xl font-bold">{mentor.rating}</div>
+                    <div className="text-2xl font-bold">{mentor?.rating || '-'}</div>
                     <div className="text-blue-100 text-sm">Rating</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {mentor.totalStudents}
+                      {students?.length || 0}
                     </div>
                     <div className="text-blue-100 text-sm">Students</div>
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {mentor.yearsExperience}
+                      {mentor?.yearsExperience || 0}
                     </div>
                     <div className="text-blue-100 text-sm">Years Exp.</div>
                   </div>
@@ -323,8 +366,20 @@ const MentorDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
+              {stats && stats.stats?.map((stat, index) => {
+                const icons = {
+                  "Total Students": Users,
+                  "New Students": TrendingUp,
+                  "Pending Assessments": Award,
+                  "Upcoming Sessions": Clock
+                };
+                const colors = {
+                  "Total Students": "blue",
+                  "New Students": "green",
+                  "Pending Assessments": "yellow",
+                  "Upcoming Sessions": "purple"
+                };
+                const Icon = icons[stat.label] || Users;
                 return (
                   <div
                     key={index}
@@ -340,18 +395,18 @@ const MentorDashboard = () => {
                         </p>
                         <p
                           className={`text-sm font-medium ${
-                            stat.change.startsWith("+")
+                            stat.change?.startsWith("+")
                               ? "text-green-600"
                               : "text-red-600"
                           }`}
                         >
-                          {stat.change} this week
+                          {stat.change || "No change"} this week
                         </p>
                       </div>
                       <div
-                        className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}
+                        className={`w-12 h-12 bg-${colors[stat.label] || "gray"}-100 rounded-lg flex items-center justify-center`}
                       >
-                        <Icon className={`w-6 h-6 text-${stat.color}-600`} />
+                        <Icon className={`w-6 h-6 text-${colors[stat.label] || "gray"}-600`} />
                       </div>
                     </div>
                   </div>
@@ -367,24 +422,24 @@ const MentorDashboard = () => {
                   Student Domain Distribution
                 </h2>
                 <div className="space-y-4">
-                  {domainData.map((domain, index) => (
+                  {mentor?.domains?.map((domain, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                     >
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">
-                          {domain.domain}
+                          {domain.name}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          {domain.students} students
+                          {domain.studentCount || 0} students
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="font-semibold">
-                            {domain.avgScore}
+                            {domain.averageScore?.toFixed(1) || '-'}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500">Avg. Score</p>
@@ -394,7 +449,7 @@ const MentorDashboard = () => {
                           <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{
-                              width: `${(domain.students / 45) * 100}%`,
+                              width: `${(domain.studentCount / (students?.length || 1)) * 100}%`,
                             }}
                           ></div>
                         </div>
@@ -408,30 +463,70 @@ const MentorDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    Upcoming Sessions
+                    Upcoming & Pending Sessions
                   </h2>
                   <button className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors">
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {upcomingSessions.map((session) => (
+                  {sessions?.map((session) => (
                     <div
-                      key={session.id}
+                      key={session._id}
                       className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-gray-900">
-                          {session.student}
+                          {session.student?.name || 'Student'}
                         </h3>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          {session.type}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-1 rounded-full ${session.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : session.status === 'scheduled' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {session.status}
+                          </span>
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            {session.type || 'video'}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600 mb-1">
-                        {session.topic}
+                        {session.topic || 'General Session'}
                       </p>
-                      <p className="text-xs text-gray-500">{session.time}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(session.scheduledTime).toLocaleString()}
+                      </p>
+
+                      {session.status === 'pending' && (
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                const updated = await MentorService.updateSessionStatus(session._id, 'scheduled');
+                                setSessions(prev => prev.map(s => s._id === session._id ? updated : s));
+                              } catch (e) {
+                                console.error('Accept failed', e);
+                                alert('Failed to accept session');
+                              }
+                            }}
+                            className="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const updated = await MentorService.updateSessionStatus(session._id, 'declined');
+                                setSessions(prev => prev.map(s => s._id === session._id ? updated : s));
+                              } catch (e) {
+                                console.error('Decline failed', e);
+                                alert('Failed to decline session');
+                              }
+                            }}
+                            className="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -452,9 +547,9 @@ const MentorDashboard = () => {
                 </button>
               </div>
               <div className="space-y-4">
-                {recentMessages.slice(0, 3).map((message) => (
+                {messages.slice(0, 3).map((message) => (
                   <div
-                    key={message.id}
+                    key={message._id}
                     className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -516,12 +611,12 @@ const MentorDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredStudents.map((student) => (
                 <div
-                  key={student.id}
+                  key={student._id}
                   className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 >
                   <div className="flex items-center space-x-4 mb-4">
                     <img
-                      src={student.avatar}
+                      src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
                       alt={student.name}
                       className="w-16 h-16 rounded-full object-cover"
                     />
@@ -530,12 +625,12 @@ const MentorDashboard = () => {
                         {student.name}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {student.education}
+                        {student.education?.degree} {student.education?.institution && `at ${student.education.institution}`}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
                         <MapPin className="w-3 h-3 text-gray-400" />
                         <span className="text-xs text-gray-500">
-                          {student.location}
+                          {student.location || 'Location not set'}
                         </span>
                       </div>
                     </div>
@@ -548,7 +643,7 @@ const MentorDashboard = () => {
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {student.status}
+                      {student.status || 'active'}
                     </span>
                   </div>
 
@@ -556,13 +651,13 @@ const MentorDashboard = () => {
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-600">Profile Completion</span>
                       <span className="font-medium">
-                        {student.profileCompletion}%
+                        {student.profileCompletion || 0}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${student.profileCompletion}%` }}
+                        style={{ width: `${student.profileCompletion || 0}%` }}
                       ></div>
                     </div>
                   </div>
@@ -570,7 +665,7 @@ const MentorDashboard = () => {
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-2">Skills:</p>
                     <div className="flex flex-wrap gap-1">
-                      {student.skills.slice(0, 3).map((skill, index) => (
+                      {(student.skills || []).slice(0, 3).map((skill, index) => (
                         <span
                           key={index}
                           className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
@@ -578,7 +673,7 @@ const MentorDashboard = () => {
                           {skill}
                         </span>
                       ))}
-                      {student.skills.length > 3 && (
+                      {(student.skills || []).length > 3 && (
                         <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
                           +{student.skills.length - 3}
                         </span>
@@ -589,7 +684,7 @@ const MentorDashboard = () => {
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-2">Interests:</p>
                     <div className="flex flex-wrap gap-1">
-                      {student.interests.map((interest, index) => (
+                      {(student.interests || []).map((interest, index) => (
                         <span
                           key={index}
                           className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs"
@@ -601,7 +696,7 @@ const MentorDashboard = () => {
                   </div>
 
                   <p className="text-xs text-gray-500 mb-4">
-                    Last active: {student.lastActive}
+                    Last active: {student.lastActive || 'Never'}
                   </p>
 
                   <div className="flex space-x-2">
@@ -645,39 +740,28 @@ const MentorDashboard = () => {
 
         {/* Messages Tab */}
         {activeTab === "messages" && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">
-              Messages & Notifications
-            </h2>
-            <div className="space-y-4">
-              {recentMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1">
+              <MessagesList
+                onSelectStudent={(studentId) => setSelectedStudent(studentId)}
+                selectedStudentId={selectedStudent}
+              />
+            </div>
+            <div className="md:col-span-2">
+              {selectedStudent ? (
+                <ChatInterface
+                  studentId={selectedStudent}
+                  mentorId={mentor?._id}
+                />
+              ) : (
+                <div className="bg-white rounded-lg shadow h-full flex items-center justify-center p-6 text-center text-gray-500">
+                  <div>
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No conversation selected</h3>
+                    <p>Select a student from the list to start chatting</p>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {message.student}
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {message.time}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 mb-3">{message.message}</p>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                      <Send className="w-4 h-4 inline mr-1" />
-                      Reply
-                    </button>
-                  </div>
-                  {message.unread && (
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  )}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}

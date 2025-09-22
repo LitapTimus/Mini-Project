@@ -14,7 +14,7 @@ const isAuthenticated = (req, res, next) => {
 // GET /api/students/profile - Get current student's profile
 router.get('/profile', isAuthenticated, async (req, res) => {
   try {
-    const student = await Student.findOne({ googleId: req.user.id });
+    const student = await Student.findOne({ googleId: req.user.googleId });
     
     if (!student) {
       return res.status(404).json({ message: 'Student profile not found' });
@@ -56,7 +56,7 @@ router.post('/profile', isAuthenticated, async (req, res) => {
     } = req.body;
 
     // Check if student profile already exists
-    let student = await Student.findOne({ googleId: req.user.id });
+    let student = await Student.findOne({ googleId: req.user.googleId });
     
     if (student) {
       // Update existing profile
@@ -86,9 +86,9 @@ router.post('/profile', isAuthenticated, async (req, res) => {
     } else {
       // Create new profile
       student = new Student({
-        googleId: req.user.id,
-        email: req.user.emails[0].value,
-        displayName: req.user.displayName,
+        googleId: req.user.googleId,
+        email: req.user.email,
+        displayName: req.user.name,
         firstName,
         lastName,
         phone,
@@ -140,7 +140,7 @@ router.post('/profile', isAuthenticated, async (req, res) => {
 // PUT /api/students/profile - Update specific fields
 router.put('/profile', isAuthenticated, async (req, res) => {
   try {
-    const student = await Student.findOne({ googleId: req.user.id });
+    const student = await Student.findOne({ googleId: req.user.googleId });
     
     if (!student) {
       return res.status(404).json({ message: 'Student profile not found' });
@@ -171,7 +171,7 @@ router.put('/profile', isAuthenticated, async (req, res) => {
 // DELETE /api/students/profile - Delete student profile
 router.delete('/profile', isAuthenticated, async (req, res) => {
   try {
-    const student = await Student.findOneAndDelete({ googleId: req.user.id });
+    const student = await Student.findOneAndDelete({ googleId: req.user.googleId });
     
     if (!student) {
       return res.status(404).json({ message: 'Student profile not found' });

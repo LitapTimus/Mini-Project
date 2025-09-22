@@ -63,7 +63,7 @@ export default function FeaturesSection() {
   }, []);
 
   return (
-    <section id="features" className="py-12 bg-gray-50">
+    <section id="features" className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
           Everything You Need to <span className="text-green-600">Succeed</span>
