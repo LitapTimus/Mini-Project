@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "../pages/LandingPage";
 import RoleSelection from "../pages/RoleSelection";
+import StudentAuth from "../pages/StudentAuth";
+import MentorAuth from "../pages/MentorAuth";
+import RecruiterAuth from "../pages/RecruiterAuth";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect, useCallback } from "react";
@@ -49,6 +52,11 @@ export default function AppRoutes() {
         {/* Role selection page */}
         <Route path="/role-selection" element={<RoleSelection />} />
 
+        {/* Authentication pages for each role */}
+        <Route path="/auth/student" element={<StudentAuth />} />
+        <Route path="/auth/mentor" element={<MentorAuth />} />
+        <Route path="/auth/recruiter" element={<RecruiterAuth />} />
+
         {/* Protected dashboard - handles all role-based routing internally */}
         <Route
           path="/dashboard"
@@ -61,8 +69,14 @@ export default function AppRoutes() {
 
         {/* AI Interview flow (public for now) */}
         <Route path="/interview" element={<InterviewStart />} />
-        <Route path="/interview/session/:sessionId/question" element={<InterviewWorkspace />} />
-        <Route path="/interview/session/:sessionId/summary" element={<InterviewSummary />} />
+        <Route
+          path="/interview/session/:sessionId/question"
+          element={<InterviewWorkspace />}
+        />
+        <Route
+          path="/interview/session/:sessionId/summary"
+          element={<InterviewSummary />}
+        />
 
         {/* Jobs board visible to students */}
         <Route path="/jobs" element={<Jobs />} />
