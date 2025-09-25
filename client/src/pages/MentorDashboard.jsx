@@ -31,7 +31,7 @@ const MentorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [showSessionScheduler, setShowSessionScheduler] = useState(false);
-  
+
   // State for all data
   const [mentor, setMentor] = useState(null);
   const [students, setStudents] = useState([]);
@@ -45,7 +45,6 @@ const MentorDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Starting to fetch mentor dashboard data...');
         setLoading(true);
         const [
           mentorProfile,
@@ -53,17 +52,16 @@ const MentorDashboard = () => {
           upcomingSessions,
           recentMessages,
           mentorStats,
-          pendingSessions
+          pendingSessions,
         ] = await Promise.all([
           MentorService.getMentorProfile(),
           MentorService.getMentorStudents(),
           MentorService.getUpcomingSessions(),
           MentorService.getRecentMessages(),
           MentorService.getMentorStats(),
-          MentorService.getPendingSessions()
+          MentorService.getPendingSessions(),
         ]);
 
-        console.log('Fetched data:', { mentorProfile, mentorStudents, upcomingSessions, recentMessages, mentorStats });
         setMentor(mentorProfile);
         setStudents(mentorStudents);
         setSessions([...pendingSessions, ...upcomingSessions]);
@@ -83,7 +81,13 @@ const MentorDashboard = () => {
 
   // If first login and basic fields missing, open profile form
   useEffect(() => {
-    if (mentor && (!mentor.title || !mentor.yearsExperience || !mentor.expertise || mentor.expertise.length === 0)) {
+    if (
+      mentor &&
+      (!mentor.title ||
+        !mentor.yearsExperience ||
+        !mentor.expertise ||
+        mentor.expertise.length === 0)
+    ) {
       setShowProfileEdit(true);
     }
   }, [mentor]);
@@ -182,7 +186,9 @@ const MentorDashboard = () => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Error Loading Dashboard
+          </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -203,11 +209,13 @@ const MentorDashboard = () => {
           mentor={mentor}
           onSubmit={async (data) => {
             try {
-              const updatedProfile = await MentorService.updateMentorProfile(data);
+              const updatedProfile = await MentorService.updateMentorProfile(
+                data
+              );
               setMentor(updatedProfile);
               setShowProfileEdit(false);
             } catch (error) {
-              console.error('Failed to update profile:', error);
+              console.error("Failed to update profile:", error);
             }
           }}
           onCancel={() => setShowProfileEdit(false)}
@@ -283,28 +291,31 @@ const MentorDashboard = () => {
               </button>
             </nav>
 
-              {/* Profile Menu */}
-              <div className="flex items-center space-x-4">
-                <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                  <Bell className="w-5 h-5" />
-                  {messages?.some(m => !m.read) && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                  )}
-                </button>              <div className="flex items-center space-x-3 relative group">
+            {/* Profile Menu */}
+            <div className="flex items-center space-x-4">
+              <button className="relative p-2 text-gray-600 hover:text-gray-900">
+                <Bell className="w-5 h-5" />
+                {messages?.some((m) => !m.read) && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                )}
+              </button>{" "}
+              <div className="flex items-center space-x-3 relative group">
                 <img
-                  src={mentor?.avatar || 'https://ui-avatars.com/api/?name=M'}
-                  alt={mentor?.name || 'Mentor'}
+                  src={mentor?.avatar || "https://ui-avatars.com/api/?name=M"}
+                  alt={mentor?.name || "Mentor"}
                   className="w-8 h-8 rounded-full object-cover cursor-pointer"
                   onClick={() => setShowProfileEdit(true)}
                 />
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-gray-900">
-                    {mentor?.name || 'Mentor'}
+                    {mentor?.name || "Mentor"}
                   </p>
-                  <p className="text-xs text-gray-500">{mentor?.title || 'Mentor'}</p>
+                  <p className="text-xs text-gray-500">
+                    {mentor?.title || "Mentor"}
+                  </p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 cursor-pointer" />
-                
+
                 {/* Profile Dropdown */}
                 <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                   <div className="py-1">
@@ -337,15 +348,19 @@ const MentorDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold mb-2">
-                    Welcome back, {mentor?.name || 'Mentor'}! 👋
+                    Welcome back, {mentor?.name || "Mentor"}! 👋
                   </h1>
                   <p className="text-blue-100 text-lg">
-                    You have {sessions?.length || 0} sessions scheduled today and {messages?.filter(m => m.unread).length || 0} new messages
+                    You have {sessions?.length || 0} sessions scheduled today
+                    and {messages?.filter((m) => m.unread).length || 0} new
+                    messages
                   </p>
                 </div>
                 <div className="hidden md:flex items-center space-x-6 text-center">
                   <div>
-                    <div className="text-2xl font-bold">{mentor?.rating || '-'}</div>
+                    <div className="text-2xl font-bold">
+                      {mentor?.rating || "-"}
+                    </div>
                     <div className="text-blue-100 text-sm">Rating</div>
                   </div>
                   <div>
@@ -366,52 +381,59 @@ const MentorDashboard = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats && stats.stats?.map((stat, index) => {
-                const icons = {
-                  "Total Students": Users,
-                  "New Students": TrendingUp,
-                  "Pending Assessments": Award,
-                  "Upcoming Sessions": Clock
-                };
-                const colors = {
-                  "Total Students": "blue",
-                  "New Students": "green",
-                  "Pending Assessments": "yellow",
-                  "Upcoming Sessions": "purple"
-                };
-                const Icon = icons[stat.label] || Users;
-                return (
-                  <div
-                    key={index}
-                    className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">
-                          {stat.label}
-                        </p>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {stat.value}
-                        </p>
-                        <p
-                          className={`text-sm font-medium ${
-                            stat.change?.startsWith("+")
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
+              {stats &&
+                stats.stats?.map((stat, index) => {
+                  const icons = {
+                    "Total Students": Users,
+                    "New Students": TrendingUp,
+                    "Pending Assessments": Award,
+                    "Upcoming Sessions": Clock,
+                  };
+                  const colors = {
+                    "Total Students": "blue",
+                    "New Students": "green",
+                    "Pending Assessments": "yellow",
+                    "Upcoming Sessions": "purple",
+                  };
+                  const Icon = icons[stat.label] || Users;
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {stat.label}
+                          </p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stat.value}
+                          </p>
+                          <p
+                            className={`text-sm font-medium ${
+                              stat.change?.startsWith("+")
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {stat.change || "No change"} this week
+                          </p>
+                        </div>
+                        <div
+                          className={`w-12 h-12 bg-${
+                            colors[stat.label] || "gray"
+                          }-100 rounded-lg flex items-center justify-center`}
                         >
-                          {stat.change || "No change"} this week
-                        </p>
-                      </div>
-                      <div
-                        className={`w-12 h-12 bg-${colors[stat.label] || "gray"}-100 rounded-lg flex items-center justify-center`}
-                      >
-                        <Icon className={`w-6 h-6 text-${colors[stat.label] || "gray"}-600`} />
+                          <Icon
+                            className={`w-6 h-6 text-${
+                              colors[stat.label] || "gray"
+                            }-600`}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
 
             {/* Main Content Grid */}
@@ -439,7 +461,7 @@ const MentorDashboard = () => {
                         <div className="flex items-center space-x-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="font-semibold">
-                            {domain.averageScore?.toFixed(1) || '-'}
+                            {domain.averageScore?.toFixed(1) || "-"}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500">Avg. Score</p>
@@ -449,7 +471,11 @@ const MentorDashboard = () => {
                           <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{
-                              width: `${(domain.studentCount / (students?.length || 1)) * 100}%`,
+                              width: `${
+                                (domain.studentCount /
+                                  (students?.length || 1)) *
+                                100
+                              }%`,
                             }}
                           ></div>
                         </div>
@@ -477,34 +503,50 @@ const MentorDashboard = () => {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold text-gray-900">
-                          {session.student?.name || 'Student'}
+                          {session.student?.name || "Student"}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-1 rounded-full ${session.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : session.status === 'scheduled' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              session.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : session.status === "scheduled"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
                             {session.status}
                           </span>
                           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {session.type || 'video'}
+                            {session.type || "video"}
                           </span>
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 mb-1">
-                        {session.topic || 'General Session'}
+                        {session.topic || "General Session"}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(session.scheduledTime).toLocaleString()}
                       </p>
 
-                      {session.status === 'pending' && (
+                      {session.status === "pending" && (
                         <div className="mt-3 flex gap-2">
                           <button
                             onClick={async () => {
                               try {
-                                const updated = await MentorService.updateSessionStatus(session._id, 'scheduled');
-                                setSessions(prev => prev.map(s => s._id === session._id ? updated : s));
+                                const updated =
+                                  await MentorService.updateSessionStatus(
+                                    session._id,
+                                    "scheduled"
+                                  );
+                                setSessions((prev) =>
+                                  prev.map((s) =>
+                                    s._id === session._id ? updated : s
+                                  )
+                                );
                               } catch (e) {
-                                console.error('Accept failed', e);
-                                alert('Failed to accept session');
+                                console.error("Accept failed", e);
+                                alert("Failed to accept session");
                               }
                             }}
                             className="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700"
@@ -514,11 +556,19 @@ const MentorDashboard = () => {
                           <button
                             onClick={async () => {
                               try {
-                                const updated = await MentorService.updateSessionStatus(session._id, 'declined');
-                                setSessions(prev => prev.map(s => s._id === session._id ? updated : s));
+                                const updated =
+                                  await MentorService.updateSessionStatus(
+                                    session._id,
+                                    "declined"
+                                  );
+                                setSessions((prev) =>
+                                  prev.map((s) =>
+                                    s._id === session._id ? updated : s
+                                  )
+                                );
                               } catch (e) {
-                                console.error('Decline failed', e);
-                                alert('Failed to decline session');
+                                console.error("Decline failed", e);
+                                alert("Failed to decline session");
                               }
                             }}
                             className="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700"
@@ -616,7 +666,12 @@ const MentorDashboard = () => {
                 >
                   <div className="flex items-center space-x-4 mb-4">
                     <img
-                      src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}`}
+                      src={
+                        student.avatar ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          student.name
+                        )}`
+                      }
                       alt={student.name}
                       className="w-16 h-16 rounded-full object-cover"
                     />
@@ -625,12 +680,14 @@ const MentorDashboard = () => {
                         {student.name}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {student.education?.degree} {student.education?.institution && `at ${student.education.institution}`}
+                        {student.education?.degree}{" "}
+                        {student.education?.institution &&
+                          `at ${student.education.institution}`}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
                         <MapPin className="w-3 h-3 text-gray-400" />
                         <span className="text-xs text-gray-500">
-                          {student.location || 'Location not set'}
+                          {student.location || "Location not set"}
                         </span>
                       </div>
                     </div>
@@ -643,7 +700,7 @@ const MentorDashboard = () => {
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {student.status || 'active'}
+                      {student.status || "active"}
                     </span>
                   </div>
 
@@ -665,14 +722,16 @@ const MentorDashboard = () => {
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-2">Skills:</p>
                     <div className="flex flex-wrap gap-1">
-                      {(student.skills || []).slice(0, 3).map((skill, index) => (
-                        <span
-                          key={index}
-                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                      {(student.skills || [])
+                        .slice(0, 3)
+                        .map((skill, index) => (
+                          <span
+                            key={index}
+                            className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                          >
+                            {skill}
+                          </span>
+                        ))}
                       {(student.skills || []).length > 3 && (
                         <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
                           +{student.skills.length - 3}
@@ -696,7 +755,7 @@ const MentorDashboard = () => {
                   </div>
 
                   <p className="text-xs text-gray-500 mb-4">
-                    Last active: {student.lastActive || 'Never'}
+                    Last active: {student.lastActive || "Never"}
                   </p>
 
                   <div className="flex space-x-2">
@@ -757,7 +816,9 @@ const MentorDashboard = () => {
                 <div className="bg-white rounded-lg shadow h-full flex items-center justify-center p-6 text-center text-gray-500">
                   <div>
                     <MessageCircle className="w-12 h-12 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No conversation selected</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      No conversation selected
+                    </h3>
                     <p>Select a student from the list to start chatting</p>
                   </div>
                 </div>

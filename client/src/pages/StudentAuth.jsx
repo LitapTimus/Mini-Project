@@ -35,13 +35,51 @@ export default function StudentAuth() {
     setLoading(true);
 
     try {
-      // Here you would make API call to your backend
-      // For now, just simulate loading
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form submitted:", formData);
-      // Redirect to dashboard or handle success
+      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+      const payload = isLogin
+        ? { email: formData.email, password: formData.password }
+        : {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            role: "student",
+          };
+
+      const response = await fetch(`http://localhost:3000${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (isLogin) {
+          // Login successful
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          navigate("/student-dashboard");
+        } else {
+          // Signup successful - need OTP verification
+          if (data.requiresVerification) {
+            navigate("/verify-otp", {
+              state: {
+                email: formData.email,
+                name: formData.name,
+                role: "student",
+              },
+            });
+          }
+        }
+      } else {
+        alert(data.message || "Authentication failed");
+      }
     } catch (error) {
       console.error("Auth error:", error);
+      alert("Network error. Please try again.");
     } finally {
       setLoading(false);
     }

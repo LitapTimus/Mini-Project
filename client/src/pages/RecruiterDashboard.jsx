@@ -61,7 +61,7 @@ export default function RecruiterDashboard() {
               recentApplicants.push(...applicantsWithJob);
             }
           } catch (error) {
-            console.log(`Error fetching applicants for job ${job._id}:`, error);
+            // Error fetching applicants for job - silently continue to next job
           }
         }
       }

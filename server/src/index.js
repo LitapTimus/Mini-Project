@@ -305,20 +305,7 @@ app.post("/auth/role", (req, res) => {
   return res.json({ success: true, role });
 });
 
-// Auth debug middleware
-app.use((req, res, next) => {
-  console.log(
-    `${req.method} ${req.path} - isAuthenticated: ${req.isAuthenticated()}`
-  );
-  if (req.isAuthenticated()) {
-    console.log("User:", {
-      id: req.user.id,
-      role: req.user.role,
-      googleId: req.user.googleId,
-    });
-  }
-  next();
-});
+// NOTE: Legacy session debug logging removed. Using JWT now; to debug JWT add logs in auth middleware instead.
 
 // Auth middleware for protected routes
 const authCheck = (req, res, next) => {
@@ -336,7 +323,8 @@ app.use("/api", routes);
 app.use("/api/auth", authRoutes);
 app.use("/api/recruiter", require("./routes/recruiter"));
 app.use("/api/students", studentRoutes);
-app.use("/api/mentors", authCheck, mentorRoutes);
+// Mentor routes now use JWT-based middleware internally; remove legacy session authCheck
+app.use("/api/mentors", mentorRoutes);
 app.use("/api/assessments", assessmentRoutes);
 // Sessions and messages should be available to both mentors and students;
 // each route file performs its own fine-grained role checks.

@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiBookOpen, FiTarget, FiUsers, FiTrendingUp, FiLogOut, FiEdit3, FiCheckCircle, FiArrowRight, FiActivity } from "react-icons/fi";
+import {
+  FiUser,
+  FiBookOpen,
+  FiTarget,
+  FiUsers,
+  FiTrendingUp,
+  FiLogOut,
+  FiEdit3,
+  FiCheckCircle,
+  FiArrowRight,
+  FiActivity,
+} from "react-icons/fi";
 import StudentProfileForm from "../components/StudentProfileForm";
 import SessionScheduler from "../components/SessionScheduler";
 import AssessmentTest from "../components/AssessmentTest";
@@ -23,10 +34,12 @@ export default function StudentDashboard() {
   const [applications, setApplications] = useState([]);
 
   const getDisplayName = () => {
-    const name = user?.displayName || user?.name || user?.given_name || user?.fullName;
-    if (name && typeof name === 'string') return name;
+    const name =
+      user?.displayName || user?.name || user?.given_name || user?.fullName;
+    if (name && typeof name === "string") return name;
     const email = user?.email;
-    if (email && typeof email === 'string' && email.includes('@')) return email.split('@')[0];
+    if (email && typeof email === "string" && email.includes("@"))
+      return email.split("@")[0];
     return null;
   };
   const [mySessions, setMySessions] = useState([]);
@@ -58,7 +71,6 @@ export default function StudentDashboard() {
       const profile = await studentService.getProfile();
       setStudentProfile(profile);
     } catch (error) {
-      console.log("No profile found yet");
       setStudentProfile(null);
     } finally {
       setLoading(false);
@@ -70,14 +82,13 @@ export default function StudentDashboard() {
       const results = await assessmentService.getTestResults();
       setPreviousResults(results);
     } catch (error) {
-      console.log("No previous results found");
       setPreviousResults([]);
     }
   };
 
   const loadApplications = async () => {
     try {
-      const email = JSON.parse(localStorage.getItem('user'))?.email;
+      const email = JSON.parse(localStorage.getItem("user"))?.email;
       if (!email) return;
       const apps = await recruiterService.getApplicationsByEmail(email);
       setApplications(apps || []);
@@ -85,8 +96,6 @@ export default function StudentDashboard() {
       setApplications([]);
     }
   };
-
-  
 
   const loadMySessions = async () => {
     try {
@@ -99,27 +108,26 @@ export default function StudentDashboard() {
 
   const handleProfileSubmit = async (profileData) => {
     try {
-      console.log('Submitting profile data:', profileData);
       const result = await studentService.saveProfile(profileData);
       setStudentProfile(result.student);
       setShowProfileForm(false);
       alert("Profile saved successfully!");
     } catch (error) {
-      console.error('Profile submission error:', error);
+      console.error("Profile submission error:", error);
       let errorMessage = error.message;
-      
+
       // If it's a validation error, show more details
-      if (error.message.includes('Validation error') && error.response) {
+      if (error.message.includes("Validation error") && error.response) {
         try {
           const errorData = await error.response.json();
           if (errorData.errors && errorData.errors.length > 0) {
-            errorMessage = `Validation errors:\n${errorData.errors.join('\n')}`;
+            errorMessage = `Validation errors:\n${errorData.errors.join("\n")}`;
           }
         } catch (e) {
           // If we can't parse the error response, use the original message
         }
       }
-      
+
       alert("Error saving profile: " + errorMessage);
     }
   };
@@ -155,8 +163,8 @@ export default function StudentDashboard() {
       setAssessmentResultId(resultId);
       setShowResults(true);
     } catch (error) {
-      console.error('Error loading result:', error);
-      alert('Failed to load result: ' + error.message);
+      console.error("Error loading result:", error);
+      alert("Failed to load result: " + error.message);
     }
   };
 
@@ -168,21 +176,26 @@ export default function StudentDashboard() {
     navigate("/");
   };
 
- 
   const handleSessionScheduled = (_session) => {
     setShowScheduler(false);
-    alert('Session scheduled successfully');
+    alert("Session scheduled successfully");
   };
 
   const handleResetAssessment = async () => {
-    if (window.confirm("Are you sure you want to reset the assessment? This will update it to include all 72 questions across 12 domains.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to reset the assessment? This will update it to include all 72 questions across 12 domains."
+      )
+    ) {
       try {
         setLoading(true);
         const result = await assessmentService.resetAssessment();
-        alert(`Assessment reset successfully! Now includes ${result.questionCount} questions.`);
+        alert(
+          `Assessment reset successfully! Now includes ${result.questionCount} questions.`
+        );
       } catch (error) {
-        console.error('Error resetting assessment:', error);
-        alert('Error resetting assessment: ' + error.message);
+        console.error("Error resetting assessment:", error);
+        alert("Error resetting assessment: " + error.message);
       } finally {
         setLoading(false);
       }
@@ -240,14 +253,20 @@ export default function StudentDashboard() {
   // Show session scheduler
   if (showScheduler) {
     return (
-      <SessionScheduler onClose={() => setShowScheduler(false)} onSessionScheduled={handleSessionScheduled} />
+      <SessionScheduler
+        onClose={() => setShowScheduler(false)}
+        onSessionScheduled={handleSessionScheduled}
+      />
     );
   }
 
   // Show session scheduler
   if (showScheduler) {
     return (
-      <SessionScheduler onClose={() => setShowScheduler(false)} onSessionScheduled={handleSessionScheduled} />
+      <SessionScheduler
+        onClose={() => setShowScheduler(false)}
+        onSessionScheduled={handleSessionScheduled}
+      />
     );
   }
 
@@ -406,13 +425,18 @@ export default function StudentDashboard() {
                   <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-green-200/50">
                     <p className="text-sm text-gray-600 mb-1">Full Name</p>
                     <p className="font-bold text-gray-900 truncate">
-                      {studentProfile.firstName} {studentProfile.lastName}
+                      {studentProfile.firstName ||
+                        studentProfile.name ||
+                        "Not provided"}{" "}
+                      {studentProfile.lastName || ""}
                     </p>
+                    {/* Debug info */}
+                    
                   </div>
                   <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-green-200/50">
                     <p className="text-sm text-gray-600 mb-1">Education</p>
                     <p className="font-bold text-gray-900 capitalize">
-                      {studentProfile.currentEducation}
+                      {studentProfile.currentEducation || "Not provided"}
                     </p>
                   </div>
                 </div>
@@ -770,7 +794,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate('/jobs')}
+                  onClick={() => navigate("/jobs")}
                   className="flex items-center text-amber-600 font-semibold group-hover:text-amber-700 transition-colors"
                 >
                   <span>Start applying</span>
@@ -857,10 +881,14 @@ export default function StudentDashboard() {
         {/* My Applications */}
         <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mt-12">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">My Job Applications</h3>
+            <h3 className="text-2xl font-bold text-gray-900">
+              My Job Applications
+            </h3>
           </div>
           {applications.length === 0 ? (
-            <p className="text-gray-600">You haven't applied to any jobs yet.</p>
+            <p className="text-gray-600">
+              You haven't applied to any jobs yet.
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left border-collapse">
@@ -874,16 +902,34 @@ export default function StudentDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.map(a => (
+                  {applications.map((a) => (
                     <tr key={a._id} className="border-b">
-                      <td className="p-2">{a.jobId?.title || 'Job'}</td>
+                      <td className="p-2">{a.jobId?.title || "Job"}</td>
                       <td className="p-2">{a.email}</td>
-                      <td className="p-2 text-blue-600"><a href={a.resumeUrl} target="_blank" rel="noreferrer">View</a></td>
-                      <td className="p-2">{new Date(a.appliedAt).toLocaleString()}</td>
+                      <td className="p-2 text-blue-600">
+                        <a href={a.resumeUrl} target="_blank" rel="noreferrer">
+                          View
+                        </a>
+                      </td>
+                      <td className="p-2">
+                        {new Date(a.appliedAt).toLocaleString()}
+                      </td>
                       <td className="p-2 capitalize">
-                        {a.status === 'shortlisted' && <span className="text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs">Shortlisted</span>}
-                        {a.status === 'rejected' && <span className="text-red-700 bg-red-100 px-2 py-1 rounded-full text-xs">Rejected</span>}
-                        {a.status === 'applied' && <span className="text-gray-700 bg-gray-100 px-2 py-1 rounded-full text-xs">Applied</span>}
+                        {a.status === "shortlisted" && (
+                          <span className="text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs">
+                            Shortlisted
+                          </span>
+                        )}
+                        {a.status === "rejected" && (
+                          <span className="text-red-700 bg-red-100 px-2 py-1 rounded-full text-xs">
+                            Rejected
+                          </span>
+                        )}
+                        {a.status === "applied" && (
+                          <span className="text-gray-700 bg-gray-100 px-2 py-1 rounded-full text-xs">
+                            Applied
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -12,7 +12,6 @@ export default function Dashboard() {
   useEffect(() => {
     // Get role from localStorage and set it once
     const role = localStorage.getItem("selectedRole");
-    console.log("Dashboard mounted, role:", role);
     setSelectedRole(role);
   }, []); // Empty dependency array - only run once on mount
 
@@ -38,17 +37,14 @@ export default function Dashboard() {
 
   // Render role-specific dashboard content
   if (selectedRole === "student") {
-    console.log("Rendering StudentDashboard");
     return <StudentDashboard />;
   }
 
   if (selectedRole === "mentor") {
-    console.log("Rendering MentorDashboard");
     return <MentorDashboard />;
   }
 
   if (selectedRole === "recruiter") {
-    console.log("Rendering RecruiterDashboard");
     return <RecruiterDashboard />;
   }
 

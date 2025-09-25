@@ -132,11 +132,11 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <Phone className="w-4 h-4 text-blue-400" />
-                  <span>+1 (555) 123-4567</span>
+                  <span>+100</span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <MapPin className="w-4 h-4 text-red-400" />
-                  <span>San Francisco, CA</span>
+                  <span>Maharashtra, Mumbai</span>
                 </div>
               </div>
 

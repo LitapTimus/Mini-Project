@@ -4,7 +4,11 @@ import RoleSelection from "../pages/RoleSelection";
 import StudentAuth from "../pages/StudentAuth";
 import MentorAuth from "../pages/MentorAuth";
 import RecruiterAuth from "../pages/RecruiterAuth";
+import VerifyOTP from "../pages/VerifyOTP";
 import Dashboard from "../pages/Dashboard";
+import StudentDashboard from "../pages/StudentDashboard";
+import MentorDashboard from "../pages/MentorDashboard";
+import RecruiterDashboard from "../pages/RecruiterDashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect, useCallback } from "react";
 import LoadingScreen from "../components/LoadingScreen";
@@ -29,6 +33,9 @@ export default function AppRoutes() {
         const data = await res.json();
         setUser(data);
         localStorage.setItem("user", JSON.stringify(data));
+        if (data?.role) {
+          localStorage.setItem("selectedRole", data.role);
+        }
       } else {
         setUser(null);
       }
@@ -56,6 +63,14 @@ export default function AppRoutes() {
         <Route path="/auth/student" element={<StudentAuth />} />
         <Route path="/auth/mentor" element={<MentorAuth />} />
         <Route path="/auth/recruiter" element={<RecruiterAuth />} />
+
+        {/* OTP Verification page */}
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+
+        {/* Role-specific dashboards */}
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/mentor-dashboard" element={<MentorDashboard />} />
+        <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
 
         {/* Protected dashboard - handles all role-based routing internally */}
         <Route

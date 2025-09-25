@@ -7,9 +7,25 @@ const User = require("../models/User");
  */
 const authenticateToken = async (req, res, next) => {
   try {
-    // Get token from header
+    // If using Passport session, trust req.isAuthenticated()
+    if (typeof req.isAuthenticated === 'function' && req.isAuthenticated() && req.user) {
+      req.userId = req.user._id;
+      return next();
+    }
+
+    // Otherwise expect a JWT in Authorization header
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+
+    if (process.env.DEBUG_AUTH === "true") {
+      console.log(
+        "[auth] Incoming",
+        req.method,
+        req.path,
+        "authHeader=",
+        authHeader
+      );
+    }
 
     if (!token) {
       return res.status(401).json({
@@ -23,6 +39,10 @@ const authenticateToken = async (req, res, next) => {
       token,
       process.env.JWT_SECRET || "your-super-secret-jwt-key"
     );
+
+    if (process.env.DEBUG_AUTH === "true") {
+      console.log("[auth] decoded token userId=", decoded.userId);
+    }
 
     // Check if user still exists and is active
     const user = await User.findById(decoded.userId);
@@ -50,6 +70,13 @@ const authenticateToken = async (req, res, next) => {
     // Add user info to request object
     req.userId = user._id;
     req.user = user;
+
+    if (process.env.DEBUG_AUTH === "true") {
+      console.log("[auth] Authenticated user", {
+        id: user._id.toString(),
+        role: user.role,
+      });
+    }
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -66,7 +93,9 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    console.error("Auth middleware error:", error);
+    if (process.env.DEBUG_AUTH === "true") {
+      console.error("Auth middleware error:", error.message);
+    }
     return res.status(500).json({
       success: false,
       message: "Server error during authentication",

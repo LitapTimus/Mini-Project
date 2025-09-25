@@ -51,19 +51,99 @@ const userSchema = new mongoose.Schema(
     },
     // Role-specific fields
     studentProfile: {
-      university: String,
-      major: String,
+      // Personal Information
+      firstName: String,
+      lastName: String,
+      phone: String,
+      dateOfBirth: Date,
+      location: String,
+
+      // Education
+      currentEducation: String,
+      institution: String,
+      fieldOfStudy: String,
       graduationYear: Number,
-      skills: [String],
+      gpa: String,
+
+      // Skills & Interests
+      technicalSkills: [String],
+      softSkills: [String],
       interests: [String],
+      languages: [String],
+
+      // Career Goals
+      careerInterests: [String],
+      preferredIndustries: [String],
+      salaryExpectation: String,
+      workPreferences: [String],
+
+      // Experience
+      internships: [
+        {
+          company: String,
+          role: String,
+          duration: String,
+          description: String,
+        },
+      ],
+      projects: [
+        {
+          name: String,
+          description: String,
+          technologies: [String],
+          link: String,
+        },
+      ],
+      certifications: [
+        {
+          name: String,
+          issuer: String,
+          date: Date,
+          link: String,
+        },
+      ],
+
+      // Additional Info
+      aboutMe: String,
+      linkedinProfile: String,
+      githubProfile: String,
+      portfolio: String,
+      profileCompleted: {
+        type: Boolean,
+        default: false,
+      },
     },
     mentorProfile: {
+      // Professional Information
+      firstName: String,
+      lastName: String,
+      phone: String,
+      location: String,
+      title: String,
       company: String,
       position: String,
       yearsOfExperience: Number,
+
+      // Expertise & Skills
       expertise: [String],
+      technicalSkills: [String],
+      industries: [String],
+
+      // Mentoring Info
       bio: String,
+      mentoringSince: Date,
+      totalStudents: { type: Number, default: 0 },
+      rating: { type: Number, default: 0 },
       hourlyRate: Number,
+      availability: String, // e.g., "weekends", "evenings", "flexible"
+
+      // Social Links
+      linkedinProfile: String,
+      portfolioWebsite: String,
+
+      // Settings
+      isAvailable: { type: Boolean, default: true },
+      profileCompleted: { type: Boolean, default: false },
     },
     recruiterProfile: {
       company: String,

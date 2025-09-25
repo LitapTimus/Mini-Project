@@ -1,70 +1,79 @@
 import React, { useState } from "react";
 
-export default function StudentProfileForm({ onSubmit, onCancel, initialData = null }) {
-  const [formData, setFormData] = useState(initialData || {
-    // Personal Information
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-    location: "",
-    
-    // Education
-    currentEducation: "",
-    institution: "",
-    fieldOfStudy: "",
-    graduationYear: "",
-    gpa: "",
-    
-    // Skills & Interests
-    technicalSkills: [],
-    softSkills: [],
-    interests: [],
-    languages: [],
-    
-    // Career Goals
-    careerInterests: [],
-    preferredIndustries: [],
-    salaryExpectation: "",
-    workPreferences: [],
-    
-    // Experience
-    internships: [],
-    projects: [],
-    certifications: [],
-    
-    // Additional Info
-    aboutMe: "",
-    linkedinProfile: "",
-    githubProfile: "",
-    portfolio: ""
-  });
+export default function StudentProfileForm({
+  onSubmit,
+  onCancel,
+  initialData = null,
+}) {
+  const [formData, setFormData] = useState(
+    initialData || {
+      // Personal Information
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      dateOfBirth: "",
+      location: "",
+
+      // Education
+      currentEducation: "",
+      institution: "",
+      fieldOfStudy: "",
+      graduationYear: "",
+      gpa: "",
+
+      // Skills & Interests
+      technicalSkills: [],
+      softSkills: [],
+      interests: [],
+      languages: [],
+
+      // Career Goals
+      careerInterests: [],
+      preferredIndustries: [],
+      salaryExpectation: "",
+      workPreferences: [],
+
+      // Experience
+      internships: [],
+      projects: [],
+      certifications: [],
+
+      // Additional Info
+      aboutMe: "",
+      linkedinProfile: "",
+      githubProfile: "",
+      portfolio: "",
+    }
+  );
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleArrayInputChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value.split(',').map(item => item.trim()).filter(item => item)
+      [field]: value
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item),
     }));
   };
 
   const handleCheckboxChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
+        ? prev[field].filter((item) => item !== value)
+        : [...prev[field], value],
     }));
   };
 
@@ -82,18 +91,30 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Clean up the data before submission
     const cleanedData = {
       ...formData,
       // Remove empty arrays and convert to proper format
-      technicalSkills: formData.technicalSkills.filter(skill => skill.trim() !== ''),
-      softSkills: formData.softSkills.filter(skill => skill.trim() !== ''),
-      interests: formData.interests.filter(interest => interest.trim() !== ''),
-      languages: formData.languages.filter(language => language.trim() !== ''),
-      careerInterests: formData.careerInterests.filter(interest => interest.trim() !== ''),
-      preferredIndustries: formData.preferredIndustries.filter(industry => industry.trim() !== ''),
-      workPreferences: formData.workPreferences.filter(pref => pref.trim() !== ''),
+      technicalSkills: formData.technicalSkills.filter(
+        (skill) => skill.trim() !== ""
+      ),
+      softSkills: formData.softSkills.filter((skill) => skill.trim() !== ""),
+      interests: formData.interests.filter(
+        (interest) => interest.trim() !== ""
+      ),
+      languages: formData.languages.filter(
+        (language) => language.trim() !== ""
+      ),
+      careerInterests: formData.careerInterests.filter(
+        (interest) => interest.trim() !== ""
+      ),
+      preferredIndustries: formData.preferredIndustries.filter(
+        (industry) => industry.trim() !== ""
+      ),
+      workPreferences: formData.workPreferences.filter(
+        (pref) => pref.trim() !== ""
+      ),
       // Convert empty strings to undefined for optional fields
       phone: formData.phone || undefined,
       dateOfBirth: formData.dateOfBirth || undefined,
@@ -105,20 +126,23 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
       aboutMe: formData.aboutMe || undefined,
       linkedinProfile: formData.linkedinProfile || undefined,
       githubProfile: formData.githubProfile || undefined,
-      portfolio: formData.portfolio || undefined
+      portfolio: formData.portfolio || undefined,
     };
-    
-    console.log('Submitting form data:', cleanedData);
+
     onSubmit(cleanedData);
   };
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h3>
-      
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">
+        Personal Information
+      </h3>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            First Name *
+          </label>
           <input
             type="text"
             name="firstName"
@@ -128,9 +152,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Last Name *
+          </label>
           <input
             type="text"
             name="lastName"
@@ -144,7 +170,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Email *
+          </label>
           <input
             type="email"
             name="email"
@@ -154,9 +182,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Phone
+          </label>
           <input
             type="tel"
             name="phone"
@@ -169,7 +199,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date of Birth
+          </label>
           <input
             type="date"
             name="dateOfBirth"
@@ -178,9 +210,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Location
+          </label>
           <input
             type="text"
             name="location"
@@ -197,9 +231,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
   const renderStep2 = () => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-900 mb-4">Education</h3>
-      
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Current Education Level *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Current Education Level *
+        </label>
         <select
           name="currentEducation"
           value={formData.currentEducation}
@@ -220,7 +256,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Institution</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Institution
+          </label>
           <input
             type="text"
             name="institution"
@@ -230,9 +268,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Field of Study</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Field of Study
+          </label>
           <input
             type="text"
             name="fieldOfStudy"
@@ -246,7 +286,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Expected Graduation Year</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Expected Graduation Year
+          </label>
           <input
             type="number"
             name="graduationYear"
@@ -257,9 +299,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">GPA (if applicable)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            GPA (if applicable)
+          </label>
           <input
             type="number"
             name="gpa"
@@ -278,54 +322,74 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Skills & Interests</h3>
-      
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">
+        Skills & Interests
+      </h3>
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Technical Skills</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Technical Skills
+        </label>
         <input
           type="text"
-          value={formData.technicalSkills.join(', ')}
-          onChange={(e) => handleArrayInputChange('technicalSkills', e.target.value)}
+          value={formData.technicalSkills.join(", ")}
+          onChange={(e) =>
+            handleArrayInputChange("technicalSkills", e.target.value)
+          }
           placeholder="e.g., JavaScript, Python, React, Machine Learning"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate skills with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate skills with commas
+        </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Soft Skills</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Soft Skills
+        </label>
         <input
           type="text"
-          value={formData.softSkills.join(', ')}
-          onChange={(e) => handleArrayInputChange('softSkills', e.target.value)}
+          value={formData.softSkills.join(", ")}
+          onChange={(e) => handleArrayInputChange("softSkills", e.target.value)}
           placeholder="e.g., Leadership, Communication, Problem Solving"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate skills with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate skills with commas
+        </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Areas of Interest</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Areas of Interest
+        </label>
         <input
           type="text"
-          value={formData.interests.join(', ')}
-          onChange={(e) => handleArrayInputChange('interests', e.target.value)}
+          value={formData.interests.join(", ")}
+          onChange={(e) => handleArrayInputChange("interests", e.target.value)}
           placeholder="e.g., AI, Web Development, Data Science"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate interests with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate interests with commas
+        </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Languages
+        </label>
         <input
           type="text"
-          value={formData.languages.join(', ')}
-          onChange={(e) => handleArrayInputChange('languages', e.target.value)}
+          value={formData.languages.join(", ")}
+          onChange={(e) => handleArrayInputChange("languages", e.target.value)}
           placeholder="e.g., English, Spanish, French"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate languages with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate languages with commas
+        </p>
       </div>
     </div>
   );
@@ -333,33 +397,47 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
   const renderStep4 = () => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-gray-900 mb-4">Career Goals</h3>
-      
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Career Interests</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Career Interests
+        </label>
         <input
           type="text"
-          value={formData.careerInterests.join(', ')}
-          onChange={(e) => handleArrayInputChange('careerInterests', e.target.value)}
+          value={formData.careerInterests.join(", ")}
+          onChange={(e) =>
+            handleArrayInputChange("careerInterests", e.target.value)
+          }
           placeholder="e.g., Software Engineer, Data Analyst, Product Manager"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate career interests with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate career interests with commas
+        </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Industries</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Preferred Industries
+        </label>
         <input
           type="text"
-          value={formData.preferredIndustries.join(', ')}
-          onChange={(e) => handleArrayInputChange('preferredIndustries', e.target.value)}
+          value={formData.preferredIndustries.join(", ")}
+          onChange={(e) =>
+            handleArrayInputChange("preferredIndustries", e.target.value)
+          }
           placeholder="e.g., Technology, Healthcare, Finance"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <p className="text-xs text-gray-500 mt-1">Separate industries with commas</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Separate industries with commas
+        </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Salary Expectation</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Salary Expectation
+        </label>
         <select
           name="salaryExpectation"
           value={formData.salaryExpectation}
@@ -376,14 +454,18 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Work Preferences</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Work Preferences
+        </label>
         <div className="space-y-2">
-          {['Remote', 'Hybrid', 'On-site', 'Flexible'].map((pref) => (
+          {["Remote", "Hybrid", "On-site", "Flexible"].map((pref) => (
             <label key={pref} className="flex items-center">
               <input
                 type="checkbox"
                 checked={formData.workPreferences.includes(pref.toLowerCase())}
-                onChange={() => handleCheckboxChange('workPreferences', pref.toLowerCase())}
+                onChange={() =>
+                  handleCheckboxChange("workPreferences", pref.toLowerCase())
+                }
                 className="mr-2 text-blue-600 focus:ring-blue-500"
               />
               {pref}
@@ -396,10 +478,14 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
   const renderStep5 = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Additional Information</h3>
-      
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">
+        Additional Information
+      </h3>
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">About Me</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          About Me
+        </label>
         <textarea
           name="aboutMe"
           value={formData.aboutMe}
@@ -412,7 +498,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn Profile</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            LinkedIn Profile
+          </label>
           <input
             type="url"
             name="linkedinProfile"
@@ -422,9 +510,11 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">GitHub Profile</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            GitHub Profile
+          </label>
           <input
             type="url"
             name="githubProfile"
@@ -437,7 +527,9 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Portfolio/Website</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Portfolio/Website
+        </label>
         <input
           type="url"
           name="portfolio"
@@ -452,30 +544,44 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      case 3: return renderStep3();
-      case 4: return renderStep4();
-      case 5: return renderStep5();
-      default: return renderStep1();
+      case 1:
+        return renderStep1();
+      case 2:
+        return renderStep2();
+      case 3:
+        return renderStep3();
+      case 4:
+        return renderStep4();
+      case 5:
+        return renderStep5();
+      default:
+        return renderStep1();
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
-        <p className="text-gray-600">Help us personalize your experience by providing some information</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          Complete Your Profile
+        </h2>
+        <p className="text-gray-600">
+          Help us personalize your experience by providing some information
+        </p>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">Step {currentStep} of {totalSteps}</span>
-          <span className="text-sm text-gray-500">{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
+          <span className="text-sm font-medium text-gray-700">
+            Step {currentStep} of {totalSteps}
+          </span>
+          <span className="text-sm text-gray-500">
+            {Math.round((currentStep / totalSteps) * 100)}% Complete
+          </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
+          <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
@@ -493,8 +599,8 @@ export default function StudentProfileForm({ onSubmit, onCancel, initialData = n
             disabled={currentStep === 1}
             className={`px-6 py-2 rounded-lg font-medium transition-colors ${
               currentStep === 1
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-500 text-white hover:bg-gray-600'
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-gray-500 text-white hover:bg-gray-600"
             }`}
           >
             Previous

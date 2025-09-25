@@ -1,261 +1,222 @@
-const express = require('express');
-const Student = require('../models/Student');
+const express = require("express");
+const User = require("../models/User");
+const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
 
-// Middleware to check if user is authenticated
-const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    next();
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
-};
-
 // GET /api/students/profile - Get current student's profile
-router.get('/profile', isAuthenticated, async (req, res) => {
-  try {
-    const student = await Student.findOne({ googleId: req.user.googleId });
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student profile not found' });
+router.get(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  async (req, res) => {
+    try {
+      // Get student profile using the user ID from JWT token
+      const student = req.user.studentProfile;
+
+      if (!student) {
+        return res.status(404).json({ message: "Student profile not found" });
+      }
+
+      res.json(student);
+    } catch (error) {
+      console.error("Error fetching student profile:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    res.json(student);
-  } catch (error) {
-    console.error('Error fetching student profile:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 // POST /api/students/profile - Create or update student profile
-router.post('/profile', isAuthenticated, async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phone,
-      dateOfBirth,
-      location,
-      currentEducation,
-      institution,
-      fieldOfStudy,
-      graduationYear,
-      gpa,
-      technicalSkills,
-      softSkills,
-      interests,
-      languages,
-      careerInterests,
-      preferredIndustries,
-      salaryExpectation,
-      workPreferences,
-      aboutMe,
-      linkedinProfile,
-      githubProfile,
-      portfolio
-    } = req.body;
+router.post(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  async (req, res) => {
+    try {
+      // Get profile data from request body
+      const profileData = req.body;
 
-    // Check if student profile already exists
-    let student = await Student.findOne({ googleId: req.user.googleId });
-    
-    if (student) {
-      // Update existing profile
-      student.firstName = firstName;
-      student.lastName = lastName;
-      student.phone = phone;
-      student.dateOfBirth = dateOfBirth;
-      student.location = location;
-      student.currentEducation = currentEducation;
-      student.institution = institution;
-      student.fieldOfStudy = fieldOfStudy;
-      student.graduationYear = graduationYear;
-      student.gpa = gpa;
-      student.technicalSkills = technicalSkills;
-      student.softSkills = softSkills;
-      student.interests = interests;
-      student.languages = languages;
-      student.careerInterests = careerInterests;
-      student.preferredIndustries = preferredIndustries;
-      student.salaryExpectation = salaryExpectation;
-      student.workPreferences = workPreferences;
-      student.aboutMe = aboutMe;
-      student.linkedinProfile = linkedinProfile;
-      student.githubProfile = githubProfile;
-      student.portfolio = portfolio;
-      student.profileCompleted = true;
-    } else {
-      // Create new profile
-      student = new Student({
-        googleId: req.user.googleId,
-        email: req.user.email,
-        displayName: req.user.name,
-        firstName,
-        lastName,
-        phone,
-        dateOfBirth,
-        location,
-        currentEducation,
-        institution,
-        fieldOfStudy,
-        graduationYear,
-        gpa,
-        technicalSkills,
-        softSkills,
-        interests,
-        languages,
-        careerInterests,
-        preferredIndustries,
-        salaryExpectation,
-        workPreferences,
-        aboutMe,
-        linkedinProfile,
-        githubProfile,
-        portfolio,
-        profileCompleted: true
+      // Update the user's student profile
+      const user = req.user;
+
+      user.studentProfile = {
+        ...user.studentProfile,
+        ...profileData,
+        profileCompleted: true,
+      };
+
+      await user.save();
+
+      res.json({
+        success: true,
+        message: "Profile saved successfully",
+        student: user.studentProfile,
+      });
+    } catch (error) {
+      console.error("Error saving student profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
       });
     }
-
-    await student.save();
-    
-    res.status(201).json({
-      message: 'Profile saved successfully',
-      student,
-      profileCompletion: student.profileCompletion
-    });
-    
-  } catch (error) {
-    console.error('Error saving student profile:', error);
-    
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: 'Validation error',
-        errors: Object.values(error.errors).map(err => err.message)
-      });
-    }
-    
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 // PUT /api/students/profile - Update specific fields
-router.put('/profile', isAuthenticated, async (req, res) => {
-  try {
-    const student = await Student.findOne({ googleId: req.user.googleId });
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student profile not found' });
+router.put(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  async (req, res) => {
+    try {
+      const user = req.user;
+
+      // Update only the provided fields
+      user.studentProfile = {
+        ...user.studentProfile,
+        ...req.body,
+      };
+
+      await user.save();
+
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        student: user.studentProfile,
+      });
+    } catch (error) {
+      console.error("Error updating student profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
     }
-    
-    // Update only the fields that are provided
-    Object.keys(req.body).forEach(key => {
-      if (req.body[key] !== undefined) {
-        student[key] = req.body[key];
-      }
-    });
-    
-    student.updatedAt = Date.now();
-    await student.save();
-    
-    res.json({
-      message: 'Profile updated successfully',
-      student,
-      profileCompletion: student.profileCompletion
-    });
-    
-  } catch (error) {
-    console.error('Error updating student profile:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 // DELETE /api/students/profile - Delete student profile
-router.delete('/profile', isAuthenticated, async (req, res) => {
-  try {
-    const student = await Student.findOneAndDelete({ googleId: req.user.googleId });
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student profile not found' });
+router.delete(
+  "/profile",
+  authenticateToken,
+  authorizeRoles("student"),
+  async (req, res) => {
+    try {
+      const user = req.user;
+
+      // Reset the student profile
+      user.studentProfile = {
+        profileCompleted: false,
+      };
+
+      await user.save();
+
+      res.json({
+        success: true,
+        message: "Profile deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting student profile:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
     }
-    
-    res.json({ message: 'Profile deleted successfully' });
-    
-  } catch (error) {
-    console.error('Error deleting student profile:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 // GET /api/students/search - Search students (for mentors/recruiters)
-router.get('/search', isAuthenticated, async (req, res) => {
-  try {
-    const { 
-      skills, 
-      interests, 
-      education, 
-      location,
-      limit = 20,
-      page = 1
-    } = req.query;
-    
-    let query = { profileCompleted: true };
-    
-    // Build search query
-    if (skills) {
-      query.technicalSkills = { $in: skills.split(',').map(s => s.trim()) };
-    }
-    
-    if (interests) {
-      query.interests = { $in: interests.split(',').map(i => i.trim()) };
-    }
-    
-    if (education) {
-      query.currentEducation = education;
-    }
-    
-    if (location) {
-      query.location = { $regex: location, $options: 'i' };
-    }
-    
-    const students = await Student.find(query)
-      .select('firstName lastName technicalSkills interests currentEducation institution location aboutMe')
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .sort({ createdAt: -1 });
-    
-    const total = await Student.countDocuments(query);
-    
-    res.json({
-      students,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / parseInt(limit)),
-        hasNext: parseInt(page) * parseInt(limit) < total,
-        hasPrev: parseInt(page) > 1
+router.get(
+  "/search",
+  authenticateToken,
+  authorizeRoles("mentor", "recruiter"),
+  async (req, res) => {
+    try {
+      const {
+        skills,
+        interests,
+        education,
+        location,
+        limit = 20,
+        page = 1,
+      } = req.query;
+
+      let query = {
+        role: "student",
+        "studentProfile.profileCompleted": true,
+      };
+
+      // Build search query
+      if (skills) {
+        query["studentProfile.technicalSkills"] = {
+          $in: skills.split(",").map((s) => s.trim()),
+        };
       }
-    });
-    
-  } catch (error) {
-    console.error('Error searching students:', error);
-    res.status(500).json({ message: 'Internal server error' });
+
+      if (interests) {
+        query["studentProfile.interests"] = {
+          $in: interests.split(",").map((i) => i.trim()),
+        };
+      }
+
+      if (education) {
+        query["studentProfile.currentEducation"] = education;
+      }
+
+      if (location) {
+        query["studentProfile.location"] = { $regex: location, $options: "i" };
+      }
+
+      const students = await User.find(query)
+        .select(
+          "name email studentProfile.firstName studentProfile.lastName studentProfile.technicalSkills studentProfile.interests studentProfile.currentEducation studentProfile.institution studentProfile.location studentProfile.aboutMe"
+        )
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .sort({ createdAt: -1 });
+
+      const total = await User.countDocuments(query);
+
+      res.json({
+        students,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(total / parseInt(limit)),
+          hasNext: parseInt(page) * parseInt(limit) < total,
+          hasPrev: parseInt(page) > 1,
+        },
+      });
+    } catch (error) {
+      console.error("Error searching students:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
   }
-});
+);
 
 // GET /api/students/:id - Get public student profile (for mentors/recruiters)
-router.get('/:id', isAuthenticated, async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id)
-      .select('-googleId -email -phone -dateOfBirth');
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+router.get(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("mentor", "recruiter"),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id)
+        .select("name studentProfile -_id")
+        .where("role")
+        .equals("student");
+
+      if (!user || !user.studentProfile) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.json({
+        name: user.name,
+        profile: user.studentProfile,
+      });
+    } catch (error) {
+      console.error("Error fetching student:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
-    
-    res.json(student);
-    
-  } catch (error) {
-    console.error('Error fetching student:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 module.exports = router;

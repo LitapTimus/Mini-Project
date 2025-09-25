@@ -4,6 +4,7 @@ const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const emailService = require("../services/emailService");
+const { authenticateToken } = require("../middleware/auth");
 const router = express.Router();
 
 // Rate limiting for authentication endpoints
@@ -384,6 +385,70 @@ router.post("/login", authLimiter, async (req, res) => {
       message: "Server error occurred during login",
     });
   }
+});
+
+/**
+ * @route GET /api/auth/me
+ * @desc  Return current authenticated user's public profile
+ * @access Private (JWT)
+ */
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated" });
+    }
+    // Re-fetch to ensure freshest role (optional)
+    const freshUser = await User.findById(req.user._id);
+    if (!freshUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    return res.json({ success: true, user: freshUser.getPublicProfile() });
+  } catch (err) {
+    console.error("/me route error:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+
+  /**
+   * @route POST /api/auth/dev/set-role
+   * @desc  Dev-only: override the authenticated user's role (for migration/testing)
+   * @access Private (JWT) + guarded by ALLOW_ROLE_OVERRIDE env flag
+   * body: { role: 'mentor' | 'student' | 'recruiter' }
+   */
+  router.post("/dev/set-role", authenticateToken, async (req, res) => {
+    try {
+      if (process.env.ALLOW_ROLE_OVERRIDE !== "true") {
+        return res
+          .status(403)
+          .json({ success: false, message: "Role override disabled" });
+      }
+      const { role } = req.body || {};
+      if (!["mentor", "student", "recruiter"].includes(role)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid role" });
+      }
+      const user = await User.findById(req.user._id);
+      if (!user)
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" });
+      user.role = role;
+      if (role === "mentor" && !user.mentorProfile) user.mentorProfile = {};
+      await user.save();
+      return res.json({
+        success: true,
+        message: "Role updated",
+        user: user.getPublicProfile(),
+      });
+    } catch (err) {
+      console.error("dev/set-role error:", err.message);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
 });
 
 /**
