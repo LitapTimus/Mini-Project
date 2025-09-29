@@ -26,15 +26,24 @@ export default function AppRoutes() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:3000/auth/user", {
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-        localStorage.setItem("user", JSON.stringify(data));
-        if (data?.role) {
-          localStorage.setItem("selectedRole", data.role);
+      // Check if we have a token and user in localStorage
+      const token = localStorage.getItem("token");
+      const userJson = localStorage.getItem("user");
+
+      if (token && userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          setUser(user);
+          // Don't override selectedRole if it's already set
+          if (!localStorage.getItem("selectedRole") && user?.role) {
+            localStorage.setItem("selectedRole", user.role);
+          }
+        } catch (e) {
+          // Invalid JSON, clear storage
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("selectedRole");
+          setUser(null);
         }
       } else {
         setUser(null);

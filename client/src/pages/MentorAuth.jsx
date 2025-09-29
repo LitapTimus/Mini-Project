@@ -62,6 +62,7 @@ export default function MentorAuth() {
           // Login successful
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("selectedRole", "mentor");
           navigate("/mentor-dashboard");
         } else {
           // Signup successful - need OTP verification

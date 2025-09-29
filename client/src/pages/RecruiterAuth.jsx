@@ -63,6 +63,7 @@ export default function RecruiterAuth() {
           // Login successful
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("selectedRole", "recruiter");
           navigate("/recruiter-dashboard");
         } else {
           // Signup successful - need OTP verification
