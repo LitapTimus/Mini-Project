@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Student = require("../models/Student");
+const Mentor = require("../models/Mentor");
 
 /**
  * Authentication middleware to verify JWT tokens
@@ -44,8 +46,51 @@ const authenticateToken = async (req, res, next) => {
       console.log("[auth] decoded token userId=", decoded.userId);
     }
 
-    // Check if user still exists and is active
-    const user = await User.findById(decoded.userId);
+    // Try to find user in User model first (email/password auth)
+    let user = await User.findById(decoded.userId);
+    
+    // If not found in User model, try Student model (OAuth)
+    if (!user) {
+      const student = await Student.findById(decoded.userId);
+      if (student) {
+        // Create a user-like object for compatibility
+        user = {
+          _id: student._id,
+          email: student.email,
+          name: student.displayName,
+          role: "student",
+          isActive: true,
+          isVerified: true,
+          studentProfile: student,
+        };
+      }
+    }
+    
+    // If still not found, try Mentor model (OAuth)
+    if (!user) {
+      const mentor = await Mentor.findById(decoded.userId);
+      if (mentor) {
+        // Create a user-like object for compatibility
+        user = {
+          _id: mentor._id,
+          email: mentor.email,
+          name: mentor.name,
+          role: "mentor",
+          isActive: mentor.status === "active",
+          isVerified: true,
+          mentorProfile: mentor,
+        };
+      }
+    }
+    
+    // If still not found, try User model with recruiter role
+    if (!user) {
+      const recruiter = await User.findById(decoded.userId).where('role').equals('recruiter');
+      if (recruiter) {
+        user = recruiter;
+      }
+    }
+
     if (!user) {
       return res.status(401).json({
         success: false,

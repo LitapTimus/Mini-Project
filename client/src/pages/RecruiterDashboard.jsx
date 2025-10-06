@@ -30,6 +30,21 @@ export default function RecruiterDashboard() {
   });
 
   useEffect(() => {
+    // Check for OAuth callback parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userParam = urlParams.get('user');
+    
+    if (token && userParam) {
+      // Store token and user data from OAuth callback
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', userParam);
+      localStorage.setItem('selectedRole', 'recruiter');
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     loadDashboardData();
   }, []);
 

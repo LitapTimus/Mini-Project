@@ -1,5 +1,14 @@
 const API_BASE = "http://localhost:3000/api/recruiter";
 
+// Helper function to get auth headers with JWT token
+function getAuthHeaders() {
+	const token = localStorage.getItem("token");
+	return {
+		"Content-Type": "application/json",
+		...(token && { Authorization: `Bearer ${token}` }),
+	};
+}
+
 async function toJson(res) {
 	if (!res.ok) {
 		let msg = `HTTP ${res.status}`;
@@ -16,36 +25,36 @@ function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val));
 
 export const recruiterService = {
 	async getCompanyProfile() {
-		try { const res = await fetch(`${API_BASE}/company`); return await toJson(res); }
-		catch (_e) { return lsGet('recruiter_company', { name: '', address: '', size: '', founded: '' }); }
+		try { const res = await fetch(`${API_BASE}/company`, { headers: getAuthHeaders() }); return await toJson(res); }
+		catch (_e) { return { name: '', address: '', size: '', founded: '' }; }
 	},
 	async saveCompanyProfile(profile) {
-		try { const res = await fetch(`${API_BASE}/company`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile) }); return await toJson(res); }
-		catch (_e) { lsSet('recruiter_company', profile); return profile; }
+		try { const res = await fetch(`${API_BASE}/company`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(profile) }); return await toJson(res); }
+		catch (_e) { throw new Error('Failed to save company profile'); }
 	},
 	async getJobs() {
-		try { const res = await fetch(`${API_BASE}/jobs`); return await toJson(res); }
-		catch (_e) { return lsGet('recruiter_jobs', []); }
+		try { const res = await fetch(`${API_BASE}/jobs`, { headers: getAuthHeaders() }); return await toJson(res); }
+		catch (_e) { return []; }
 	},
 	async createJob(job) {
-		try { const res = await fetch(`${API_BASE}/jobs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(job) }); return await toJson(res); }
-		catch (_e) { const list = lsGet('recruiter_jobs', []); const j = { ...job, _id: `job_${Date.now()}`, postedAt: new Date().toISOString(), applicantsCount: 0 }; list.unshift(j); lsSet('recruiter_jobs', list); return j; }
+		try { const res = await fetch(`${API_BASE}/jobs`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(job) }); return await toJson(res); }
+		catch (_e) { throw new Error('Failed to create job'); }
 	},
 	async getApplicants(jobId) {
-		try { const res = await fetch(`${API_BASE}/jobs/${jobId}/applicants`); return await toJson(res); }
-		catch (_e) { const key = `recruiter_applicants_${jobId}`; return lsGet(key, []); }
+		try { const res = await fetch(`${API_BASE}/jobs/${jobId}/applicants`, { headers: getAuthHeaders() }); return await toJson(res); }
+		catch (_e) { return []; }
 	},
 	async applyToJob(jobId, applicant) {
-		try { const res = await fetch(`${API_BASE}/jobs/${jobId}/apply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(applicant) }); return await toJson(res); }
-		catch (_e) { return { success: true, storedLocally: true }; }
+		try { const res = await fetch(`${API_BASE}/jobs/${jobId}/apply`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(applicant) }); return await toJson(res); }
+		catch (_e) { throw new Error('Failed to apply to job'); }
 	}
 ,
 	async updateApplicationStatus(appId, status) {
-		const res = await fetch(`${API_BASE}/applications/${appId}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+		const res = await fetch(`${API_BASE}/applications/${appId}/status`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ status }) });
 		return toJson(res);
 	},
 	async getApplicationsByEmail(email) {
-		const res = await fetch(`${API_BASE}/applications/by-email/${encodeURIComponent(email)}`);
+		const res = await fetch(`${API_BASE}/applications/by-email/${encodeURIComponent(email)}`, { headers: getAuthHeaders() });
 		return toJson(res);
 	}
 };
