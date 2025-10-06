@@ -19,6 +19,8 @@ import Jobs from "../pages/Jobs";
 import RecruiterJobs from "../pages/RecruiterJobs";
 import RecruiterCompany from "../pages/RecruiterCompany";
 import RecruiterApplicants from "../pages/RecruiterApplicants";
+import ExploreCareer from "../pages/ExploreCareer";
+import SetGoals from "../pages/SetGoals";
 
 export default function AppRoutes() {
   const [user, setUser] = useState(null);
@@ -104,6 +106,12 @@ export default function AppRoutes() {
 
         {/* Jobs board visible to students */}
         <Route path="/jobs" element={<Jobs />} />
+        
+        {/* Career exploration for students */}
+        <Route path="/explore-careers" element={<ExploreCareer />} />
+        
+        {/* Career goals for students */}
+        <Route path="/set-goals" element={<SetGoals />} />
 
         {/* Recruiter tools */}
         <Route path="/recruiter/jobs" element={<RecruiterJobs />} />

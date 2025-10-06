@@ -89,7 +89,7 @@ export default function RecruiterAuth() {
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = "http://localhost:3000/auth/google?role=recruiter";
+    window.location.href = "http://localhost:3000/auth/google/recruiter";
   };
 
   return (

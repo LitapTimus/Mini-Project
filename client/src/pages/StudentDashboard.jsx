@@ -46,10 +46,24 @@ export default function StudentDashboard() {
   const [showScheduler, setShowScheduler] = useState(false);
 
   useEffect(() => {
+    // Check for OAuth callback parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userParam = urlParams.get('user');
+    
+    if (token && userParam) {
+      // Store token and user data from OAuth callback
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', userParam);
+      localStorage.setItem('selectedRole', 'student');
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     loadStudentProfile();
     loadUserData();
     loadPreviousResults();
-    loadMySessions();
     loadMySessions();
     loadApplications();
   }, []);
@@ -642,7 +656,9 @@ export default function StudentDashboard() {
           {/* Grid for all 4 cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 auto-rows-fr">
             {/* Explore Careers */}
-            <div className="group relative bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-blue-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
+            <div 
+              onClick={() => navigate('/explore-careers')}
+              className="group relative bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-blue-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
               {/* Background Pattern */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-cyan-100/20 to-transparent rounded-full translate-y-10 -translate-x-10"></div>
@@ -682,7 +698,9 @@ export default function StudentDashboard() {
             </div>
 
             {/* Set Goals */}
-            <div className="group relative bg-gradient-to-br from-white via-green-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-green-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
+            <div 
+              onClick={() => navigate('/set-goals')}
+              className="group relative bg-gradient-to-br from-white via-green-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-green-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
               {/* Background Pattern */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-100/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-emerald-100/20 to-transparent rounded-full translate-y-10 -translate-x-10"></div>

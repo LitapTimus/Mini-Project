@@ -5,6 +5,7 @@ const session = require("express-session");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const mongoose = require("mongoose");
+const cors = require("cors");
 const routes = require("./routes/index");
 const studentRoutes = require("./routes/students");
 const mentorRoutes = require("./routes/mentors");
@@ -71,7 +72,12 @@ io.on("connection", (socket) => {
 // Connect to MongoDB
 mongoose
   .connect(
-    process.env.MONGODB_URI || "mongodb://localhost:27017/career-compass"
+    process.env.MONGODB_URI || "mongodb://localhost:27017/career-compass",
+    {
+      serverSelectionTimeoutMS: 5000,
+      retryWrites: true,
+      retryReads: true
+    }
   )
   .then(async () => {
     console.log("✅ Connected to MongoDB");
@@ -116,7 +122,6 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // CORS middleware (must come before routes)
-const cors = require("cors");
 app.use(
   cors({
     origin: CLIENT_URL,
@@ -127,14 +132,15 @@ app.use(
 // Session middleware
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-secret-key",
-    resave: true,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || (process.env.NODE_ENV === 'production' ? undefined : "dev_secret_key"),
+    resave: false,
+    saveUninitialized: false,
     rolling: true,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: "lax",
-      secure: false, // true in production with HTTPS
+      secure: process.env.NODE_ENV === 'production', // true in production with HTTPS
+      httpOnly: true
     },
   })
 );
@@ -149,13 +155,17 @@ app.use(passport.session());
 
 // Google OAuth Strategy
 const Mentor = require("./models/Mentor");
+const Student = require("./models/Student");
+const User = require("./models/User");
 
+// Google OAuth Strategy for Mentors
 passport.use(
+  'google-mentor',
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${SERVER_URL}/auth/google/callback`,
+      callbackURL: "http://localhost:3000/auth/google/mentor/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -167,8 +177,8 @@ passport.use(
           mentor = new Mentor({
             googleId: profile.id,
             name: profile.displayName,
-            email: profile.emails[0].value,
-            avatar: profile.photos[0].value,
+            email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
+            avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
             title: "New Mentor",
             yearsExperience: 0,
             expertise: ["General Mentoring"],
@@ -193,6 +203,92 @@ passport.use(
   )
 );
 
+// Google OAuth Strategy for Students
+passport.use(
+  'google-student',
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Check if student exists
+        let student = await Student.findOne({ googleId: profile.id });
+
+        if (!student) {
+          // Create new student
+          student = new Student({
+            googleId: profile.id,
+            email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
+            displayName: profile.displayName,
+            firstName: profile.name?.givenName || profile.displayName.split(' ')[0],
+            lastName: profile.name?.familyName || profile.displayName.split(' ').slice(1).join(' '),
+            currentEducation: 'other', // Default value, student can update later
+          });
+          await student.save();
+        }
+
+        // Return simplified user object
+        return done(null, {
+          _id: student._id,
+          role: "student",
+          googleId: profile.id,
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          studentData: student,
+        });
+      } catch (error) {
+        return done(error, null);
+      }
+    }
+  )
+);
+
+// Google OAuth Strategy for Recruiters
+passport.use(
+  'google-recruiter',
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/auth/google/recruiter/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Check if recruiter exists
+        let recruiter = await User.findOne({ googleId: profile.id, role: "recruiter" });
+
+        if (!recruiter) {
+          // Create new recruiter
+          recruiter = new User({
+            googleId: profile.id,
+            name: profile.displayName,
+            email: profile.emails && profile.emails[0] ? profile.emails[0].value : '',
+            profilePicture: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+            role: "recruiter",
+            recruiterProfile: {},
+          });
+          await recruiter.save();
+        }
+
+        // Return simplified user object
+        return done(null, {
+          _id: recruiter._id,
+          role: "recruiter",
+          googleId: profile.id,
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          recruiterData: recruiter,
+        });
+      } catch (error) {
+        return done(error, null);
+      }
+    }
+  )
+);
+
 passport.serializeUser((user, done) => {
   // Store the Google ID and role
   done(null, {
@@ -203,23 +299,60 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (serialized, done) => {
   try {
-    // Fetch fresh mentor data using Google ID
-    const mentor = await Mentor.findOne({ googleId: serialized.googleId });
-    if (!mentor) {
-      return done(null, false);
+    let userData;
+    if (serialized.role === "recruiter") {
+      // Fetch recruiter data from User model
+      userData = await User.findOne({ googleId: serialized.googleId, role: "recruiter" });
+      if (!userData) {
+        return done(null, false);
+      }
+      // Create full user object with recruiter role
+      const user = {
+        id: userData._id,
+        googleId: userData.googleId,
+        role: serialized.role,
+        email: userData.email,
+        name: userData.name,
+        recruiterData: userData,
+      };
+      done(null, user);
+    } else if (serialized.role === "student") {
+      // Fetch student data using Google ID
+      const student = await Student.findOne({ googleId: serialized.googleId });
+      if (!student) {
+        return done(null, false);
+      }
+
+      // Create full user object with student role
+      const user = {
+        id: student._id,
+        googleId: student.googleId,
+        role: serialized.role,
+        email: student.email,
+        name: student.displayName,
+        studentData: student,
+      };
+
+      done(null, user);
+    } else {
+      // Fetch mentor data using Google ID
+      const mentor = await Mentor.findOne({ googleId: serialized.googleId });
+      if (!mentor) {
+        return done(null, false);
+      }
+
+      // Create full user object with mentor role
+      const user = {
+        id: mentor._id,
+        googleId: mentor.googleId,
+        role: serialized.role,
+        email: mentor.email,
+        name: mentor.name,
+        mentorData: mentor,
+      };
+
+      done(null, user);
     }
-
-    // Create full user object with mentor role
-    const user = {
-      id: mentor._id,
-      googleId: mentor.googleId,
-      role: serialized.role,
-      email: mentor.email,
-      name: mentor.name,
-      mentorData: mentor,
-    };
-
-    done(null, user);
   } catch (err) {
     done(err, null);
   }
@@ -232,15 +365,15 @@ app.get("/", (req, res) => {
   );
 });
 
-// Google OAuth routes
+// Google OAuth routes for Mentors
 app.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  "/auth/google/mentor",
+  passport.authenticate("google-mentor", { scope: ["profile", "email"] })
 );
 
 app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
+  "/auth/google/mentor/callback",
+  passport.authenticate("google-mentor", { failureRedirect: "/" }),
   async (req, res) => {
     try {
       // Check if user exists as a mentor
@@ -250,11 +383,259 @@ app.get(
         // Update user role
         req.user.role = "mentor";
         req.user.mentorData = existingMentor;
+        
+        // Generate JWT token for the user
+        const jwt = require("jsonwebtoken");
+        const token = jwt.sign(
+          { userId: req.user._id },
+          process.env.JWT_SECRET || "your-super-secret-jwt-key",
+          { expiresIn: "7d" }
+        );
+        
+        // Prepare user data for client
+        const userData = {
+          id: existingMentor._id,
+          email: existingMentor.email,
+          name: existingMentor.name,
+          role: "mentor"
+        };
+        
+        // Redirect with token and user data as URL parameters
+        const params = new URLSearchParams({
+          token: token,
+          user: JSON.stringify(userData)
+        });
+        
+        res.redirect(`${CLIENT_URL}/mentor-dashboard?${params.toString()}`);
+      } else {
+        res.redirect(`${CLIENT_URL}/error`);
       }
+    } catch (error) {
+      console.error("Error in mentor auth callback:", error);
+      res.redirect(`${CLIENT_URL}/error`);
+    }
+  }
+);
 
-      res.redirect(`${CLIENT_URL}/dashboard`);
+app.get(
+  "/auth/google/callback",
+  (req, res, next) => {
+    // Get the intended role from session
+    const intendedRole = req.session.intendedRole || "student";
+    
+    // Use the appropriate strategy based on role
+    const strategy = intendedRole === "recruiter" 
+      ? "google-recruiter" 
+      : (intendedRole === "mentor" ? "google-mentor" : "google-student");
+    
+    passport.authenticate(strategy, { failureRedirect: "/" })(req, res, next);
+  },
+  async (req, res) => {
+    try {
+      // Get the intended role from session
+      const intendedRole = req.session.intendedRole || "student";
+      let redirectPath = "/";
+      let userData = null;
+      
+      // Handle user based on role
+      if (intendedRole === "student") {
+        // Check if user exists as a student
+        const existingStudent = await Student.findById(req.user._id);
+        if (existingStudent) {
+          // Update user role
+          req.user.role = "student";
+          req.user.studentData = existingStudent;
+          
+          // Prepare user data for client
+          userData = {
+            id: existingStudent._id,
+            email: existingStudent.email,
+            displayName: existingStudent.displayName,
+            name: existingStudent.displayName,
+            role: "student"
+          };
+          
+          // Always redirect to dashboard (onboarding page doesn't exist)
+          redirectPath = "/student-dashboard";
+        }
+      } else if (intendedRole === "mentor") {
+        // Check if user exists as a mentor
+        const existingMentor = await Mentor.findById(req.user._id);
+        if (existingMentor) {
+          // Update user role
+          req.user.role = "mentor";
+          req.user.mentorData = existingMentor;
+          
+          // Prepare user data for client
+          userData = {
+            id: existingMentor._id,
+            email: existingMentor.email,
+            name: existingMentor.name,
+            role: "mentor"
+          };
+          
+          redirectPath = "/mentor-dashboard";
+        }
+      } else if (intendedRole === "recruiter") {
+        // Check if user exists as a recruiter
+        const existingRecruiter = await User.findById(req.user._id);
+        if (existingRecruiter && existingRecruiter.role === "recruiter") {
+          // Update user role
+          req.user.role = "recruiter";
+          req.user.recruiterData = existingRecruiter;
+          
+          // Prepare user data for client
+          userData = {
+            id: existingRecruiter._id,
+            email: existingRecruiter.email,
+            name: existingRecruiter.name,
+            role: "recruiter"
+          };
+          
+          redirectPath = "/recruiter-dashboard";
+        }
+      }
+      
+      // Clear the intended role from session
+      delete req.session.intendedRole;
+      
+      // Generate JWT token for the user
+      const jwt = require("jsonwebtoken");
+      const token = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET || "your-super-secret-jwt-key",
+        { expiresIn: "7d" }
+      );
+      
+      // Redirect with token and user data as URL parameters (will be stored in localStorage by client)
+      const params = new URLSearchParams({
+        token: token,
+        user: JSON.stringify(userData)
+      });
+      
+      res.redirect(`${CLIENT_URL}${redirectPath}?${params.toString()}`);
     } catch (error) {
       console.error("Error in auth callback:", error);
+      res.redirect(`${CLIENT_URL}/error`);
+    }
+  }
+);
+
+// Google OAuth routes for Students
+app.get(
+  "/auth/google/student",
+  passport.authenticate("google-student", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/student/callback",
+  passport.authenticate("google-student", { failureRedirect: "/" }),
+  async (req, res) => {
+    try {
+      // Check if user exists as a student
+      const existingStudent = await Student.findById(req.user._id);
+
+      if (existingStudent) {
+        // Update user role
+        req.user.role = "student";
+        req.user.studentData = existingStudent;
+        
+        // Generate JWT token for the user
+        const jwt = require("jsonwebtoken");
+        const token = jwt.sign(
+          { userId: req.user._id },
+          process.env.JWT_SECRET || "your-super-secret-jwt-key",
+          { expiresIn: "7d" }
+        );
+        
+        // Prepare user data for client
+        const userData = {
+          id: existingStudent._id,
+          email: existingStudent.email,
+          displayName: existingStudent.displayName,
+          name: existingStudent.displayName,
+          role: "student"
+        };
+        
+        // Redirect with token and user data as URL parameters
+        const params = new URLSearchParams({
+          token: token,
+          user: JSON.stringify(userData)
+        });
+        
+        res.redirect(`${CLIENT_URL}/student-dashboard?${params.toString()}`);
+      } else {
+        res.redirect(`${CLIENT_URL}/error`);
+      }
+    } catch (error) {
+      console.error("Error in student auth callback:", error);
+      res.redirect(`${CLIENT_URL}/error`);
+    }
+  }
+);
+
+// Default Google OAuth route - redirects to student login
+app.get("/auth/google", (req, res) => {
+  // Store the intended role in the session
+  req.session.intendedRole = req.query.role || "student";
+  
+  // Determine which strategy to use based on role
+  const strategy = req.session.intendedRole === "recruiter" 
+    ? "google-recruiter" 
+    : (req.session.intendedRole === "mentor" ? "google-mentor" : "google-student");
+  
+  passport.authenticate(strategy, {
+    scope: ["profile", "email"],
+  })(req, res);
+});
+
+// Google OAuth routes for Recruiters
+app.get(
+  "/auth/google/recruiter",
+  passport.authenticate("google-recruiter", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/recruiter/callback",
+  passport.authenticate("google-recruiter", { failureRedirect: "/" }),
+  async (req, res) => {
+    try {
+      // Check if user exists as a recruiter
+      const existingRecruiter = await User.findById(req.user._id);
+
+      if (existingRecruiter) {
+        // Update user role
+        req.user.role = "recruiter";
+        req.user.recruiterData = existingRecruiter;
+        
+        // Generate JWT token for the user
+        const jwt = require("jsonwebtoken");
+        const token = jwt.sign(
+          { userId: req.user._id },
+          process.env.JWT_SECRET || "your-super-secret-jwt-key",
+          { expiresIn: "7d" }
+        );
+        
+        // Prepare user data for client
+        const userData = {
+          id: existingRecruiter._id,
+          email: existingRecruiter.email,
+          name: existingRecruiter.name,
+          role: "recruiter"
+        };
+        
+        // Redirect with token and user data as URL parameters
+        const params = new URLSearchParams({
+          token: token,
+          user: JSON.stringify(userData)
+        });
+        
+        res.redirect(`${CLIENT_URL}/recruiter-dashboard?${params.toString()}`);
+      } else {
+        res.redirect(`${CLIENT_URL}/error`);
+      }
+    } catch (error) {
+      console.error("Error in recruiter auth callback:", error);
       res.redirect(`${CLIENT_URL}/error`);
     }
   }
@@ -288,13 +669,13 @@ app.get("/auth/user", (req, res) => {
   }
 });
 
-// Allow client to switch role in session (mentor/student)
+// Allow client to switch role in session (mentor/student/recruiter)
 app.post("/auth/role", (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   const { role } = req.body || {};
-  if (!role || !["mentor", "student"].includes(role)) {
+  if (!role || !["mentor", "student", "recruiter"].includes(role)) {
     return res.status(400).json({ message: "Invalid role" });
   }
   // Update role on user object and in session

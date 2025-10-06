@@ -3,6 +3,10 @@ const router = express.Router();
 const Job = require('../models/Job');
 const Company = require('../models/Company');
 const Application = require('../models/Application');
+const { authenticateToken } = require('../middleware/auth');
+
+// Apply authentication to all recruiter routes
+router.use(authenticateToken);
 
 // Company
 router.get('/company', async (req, res) => {
@@ -20,9 +24,10 @@ router.post('/company', async (req, res) => {
 	return res.json(company);
 });
 
-// Jobs
-router.get('/jobs', async (_req, res) => {
-	const jobs = await Job.find({}).sort({ postedAt: -1 }).lean();
+// Jobs - Get only jobs created by this recruiter
+router.get('/jobs', async (req, res) => {
+	const recruiterId = req.user?._id || null;
+	const jobs = await Job.find(recruiterId ? { recruiterId } : {}).sort({ postedAt: -1 }).lean();
 	return res.json(jobs);
 });
 

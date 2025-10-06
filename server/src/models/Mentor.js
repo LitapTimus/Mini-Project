@@ -103,6 +103,10 @@ const mentorSchema = new mongoose.Schema({
             default: 0
         }
     }],
+    profileCompleted: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

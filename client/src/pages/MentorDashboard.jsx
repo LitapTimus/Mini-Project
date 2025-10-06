@@ -43,6 +43,21 @@ const MentorDashboard = () => {
 
   // Fetch all data on component mount
   useEffect(() => {
+    // Check for OAuth callback parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userParam = urlParams.get('user');
+    
+    if (token && userParam) {
+      // Store token and user data from OAuth callback
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', userParam);
+      localStorage.setItem('selectedRole', 'mentor');
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -79,18 +94,8 @@ const MentorDashboard = () => {
     fetchData();
   }, []);
 
-  // If first login and basic fields missing, open profile form
-  useEffect(() => {
-    if (
-      mentor &&
-      (!mentor.title ||
-        !mentor.yearsExperience ||
-        !mentor.expertise ||
-        mentor.expertise.length === 0)
-    ) {
-      setShowProfileEdit(true);
-    }
-  }, [mentor]);
+  // Don't auto-open profile form - let user click button instead
+  // useEffect removed - profile form only opens when user clicks button
 
   // Students will be loaded from API
   const [studentsList, setStudentsList] = useState([
@@ -378,6 +383,62 @@ const MentorDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Profile Completion Card */}
+            {mentor && !mentor.profileCompleted && (
+              <div className="bg-gradient-to-br from-green-50 via-white to-green-50 rounded-2xl p-8 shadow-lg border-2 border-green-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-2xl shadow-lg">
+                      <Users className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                        Complete Your Profile
+                      </h3>
+                      <p className="text-gray-600">
+                        Add your expertise and experience to help students find you
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowProfileEdit(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    <Settings className="w-5 h-5" />
+                    Complete Profile
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Profile Button for Completed Profiles */}
+            {mentor && mentor.profileCompleted && (
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-100 p-3 rounded-xl">
+                      <Users className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Profile Complete
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Your mentor profile is ready
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowProfileEdit(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Edit Profile
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

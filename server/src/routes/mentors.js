@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Mentor = require("../models/Mentor");
 const { authenticateToken } = require("../middleware/auth");
 
 // Helper middleware: promote to mentor automatically in dev if enabled
@@ -81,7 +82,30 @@ router.get(
   ensureMentor,
   async (req, res) => {
     try {
-      return res.json(buildMentorResponse(req.user));
+      // Check if this is an OAuth mentor (Mentor model)
+      const mentorDoc = await Mentor.findById(req.user._id);
+      
+      if (mentorDoc) {
+        // Return OAuth mentor data
+        return res.json({
+          _id: mentorDoc._id,
+          name: mentorDoc.name,
+          email: mentorDoc.email,
+          title: mentorDoc.title,
+          yearsExperience: mentorDoc.yearsExperience,
+          expertise: mentorDoc.expertise,
+          bio: mentorDoc.bio,
+          company: mentorDoc.company,
+          position: mentorDoc.position,
+          rating: mentorDoc.rating,
+          avatar: mentorDoc.avatar,
+          profileCompleted: mentorDoc.profileCompleted,
+          status: mentorDoc.status,
+        });
+      } else {
+        // Return User model mentor data
+        return res.json(buildMentorResponse(req.user));
+      }
     } catch (err) {
       console.error("Error fetching mentor profile:", err);
       res
@@ -94,18 +118,47 @@ router.get(
 // PUT /api/mentors/profile
 router.put("/profile", authenticateToken, ensureMentor, async (req, res) => {
   try {
-    const user = req.user;
-    user.mentorProfile = {
-      ...user.mentorProfile,
-      ...req.body,
-      profileCompleted: true,
-    };
-    await user.save();
-    return res.json({
-      success: true,
-      message: "Profile updated successfully",
-      mentor: buildMentorResponse(user),
-    });
+    // Check if this is an OAuth mentor (Mentor model) or email/password mentor (User model)
+    const mentorDoc = await Mentor.findById(req.user._id);
+    
+    if (mentorDoc) {
+      // OAuth mentor - update Mentor model directly
+      Object.assign(mentorDoc, req.body);
+      mentorDoc.profileCompleted = true;
+      await mentorDoc.save();
+      
+      return res.json({
+        success: true,
+        message: "Profile updated successfully",
+        mentor: {
+          _id: mentorDoc._id,
+          name: mentorDoc.name,
+          email: mentorDoc.email,
+          title: mentorDoc.title,
+          yearsExperience: mentorDoc.yearsExperience,
+          expertise: mentorDoc.expertise,
+          bio: mentorDoc.bio,
+          company: mentorDoc.company,
+          position: mentorDoc.position,
+          rating: mentorDoc.rating,
+          profileCompleted: mentorDoc.profileCompleted,
+        },
+      });
+    } else {
+      // Email/password mentor - update User model
+      const user = req.user;
+      user.mentorProfile = {
+        ...user.mentorProfile,
+        ...req.body,
+        profileCompleted: true,
+      };
+      await user.save();
+      return res.json({
+        success: true,
+        message: "Profile updated successfully",
+        mentor: buildMentorResponse(user),
+      });
+    }
   } catch (err) {
     console.error("Error updating mentor profile:", err);
     res
