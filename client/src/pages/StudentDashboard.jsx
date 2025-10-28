@@ -48,19 +48,19 @@ export default function StudentDashboard() {
   useEffect(() => {
     // Check for OAuth callback parameters in URL
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const userParam = urlParams.get('user');
-    
+    const token = urlParams.get("token");
+    const userParam = urlParams.get("user");
+
     if (token && userParam) {
       // Store token and user data from OAuth callback
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', userParam);
-      localStorage.setItem('selectedRole', 'student');
-      
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", userParam);
+      localStorage.setItem("selectedRole", "student");
+
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-    
+
     loadStudentProfile();
     loadUserData();
     loadPreviousResults();
@@ -324,13 +324,7 @@ export default function StudentDashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/interview")}
-                className="hidden md:flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-5 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <span className="text-lg">🤖</span>
-                <span>Start AI Interview</span>
-              </button>
+              
               <button
                 onClick={handleLogout}
                 className="group flex items-center gap-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
@@ -445,7 +439,6 @@ export default function StudentDashboard() {
                       {studentProfile.lastName || ""}
                     </p>
                     {/* Debug info */}
-                    
                   </div>
                   <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-green-200/50">
                     <p className="text-sm text-gray-600 mb-1">Education</p>
@@ -656,9 +649,10 @@ export default function StudentDashboard() {
           {/* Grid for all 4 cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 auto-rows-fr">
             {/* Explore Careers */}
-            <div 
-              onClick={() => navigate('/explore-careers')}
-              className="group relative bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-blue-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
+            <div
+              onClick={() => navigate("/explore-careers")}
+              className="group relative bg-gradient-to-br from-white via-blue-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-blue-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col"
+            >
               {/* Background Pattern */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-cyan-100/20 to-transparent rounded-full translate-y-10 -translate-x-10"></div>
@@ -698,9 +692,10 @@ export default function StudentDashboard() {
             </div>
 
             {/* Set Goals */}
-            <div 
-              onClick={() => navigate('/set-goals')}
-              className="group relative bg-gradient-to-br from-white via-green-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-green-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col">
+            <div
+              onClick={() => navigate("/set-goals")}
+              className="group relative bg-gradient-to-br from-white via-green-50/30 to-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-green-100/50 overflow-hidden cursor-pointer min-h-[260px] h-full flex flex-col"
+            >
               {/* Background Pattern */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-100/20 to-transparent rounded-full -translate-y-12 translate-x-12"></div>
               <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-emerald-100/20 to-transparent rounded-full translate-y-10 -translate-x-10"></div>
@@ -823,36 +818,6 @@ export default function StudentDashboard() {
           </div>
 
           {/* Full-width AI Interview Banner */}
-          <div className="mt-12">
-            <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 rounded-3xl shadow-xl">
-              <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-2xl"></div>
-              <div className="relative px-6 sm:px-10 py-10 sm:py-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                <div className="text-white max-w-2xl">
-                  <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 text-sm mb-3">
-                    <span>🤖</span>
-                    <span className="font-medium">AI Mock Interview</span>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold leading-tight">
-                    Practice real technical and HR interviews with instant AI
-                    feedback
-                  </h3>
-                  <p className="mt-2 text-white/90">
-                    Code in-browser, record your answers, and get actionable
-                    tips on clarity, confidence, and problem solving.
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <button
-                    onClick={() => navigate("/interview")}
-                    className="bg-white text-emerald-700 hover:bg-gray-100 px-8 py-4 rounded-2xl font-semibold shadow-lg text-lg"
-                  >
-                    Start AI Interview
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Recent Activity */}

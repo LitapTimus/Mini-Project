@@ -11,7 +11,7 @@ module.exports = {
     gemini: {
       enabled: process.env.GEMINI_API_KEY ? true : false,
       priority: 2,
-      model: 'gemini-1.5-flash',
+      model: 'gemini-pro',
       maxTokens: 2000,
       temperature: 0.7
     },

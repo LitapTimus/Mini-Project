@@ -193,4 +193,55 @@ export const studentService = {
       throw error;
     }
   },
+
+  // Get all jobs (public endpoint for students to browse)
+  async getAllJobs() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/jobs`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      return [];
+    }
+  },
+
+  // Get company profile by recruiterId
+  async getCompanyByRecruiterId(recruiterId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/companies/${recruiterId}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch company");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      return {};
+    }
+  },
+
+  // Apply to a job
+  async applyToJob(jobId, applicantData) {
+    try {
+      const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/recruiter/jobs/${jobId}/apply`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(applicantData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to apply to job");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error applying to job:", error);
+      throw error;
+    }
+  },
 };

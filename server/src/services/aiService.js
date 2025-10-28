@@ -5,8 +5,8 @@ class AIService {
     this.providers = {
       gemini: {
         name: 'Google Gemini',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-        model: 'gemini-1.5-flash'
+        baseURL: 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
+        model: 'gemini-pro'
       }
     };
   }
@@ -117,25 +117,36 @@ Please ensure the response is valid JSON and focuses on practical, actionable ca
   }
 
   async callGemini(prompt, apiKey, config) {
-    console.log('Calling Gemini API...');
-    const response = await axios.post(`${config.baseURL}?key=${apiKey}`, {
-      contents: [{
-        parts: [{
-          text: prompt
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000
-      }
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    try {
+      console.log('Calling Gemini API...');
+      console.log('API URL:', `${config.baseURL}?key=${apiKey.substring(0, 10)}...`);
+      
+      const response = await axios.post(`${config.baseURL}?key=${apiKey}`, {
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2000
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-    console.log('Gemini API call successful');
-    return response.data.candidates[0].content.parts[0].text;
+      console.log('Gemini API call successful');
+      return response.data.candidates[0].content.parts[0].text;
+    } catch (error) {
+      console.error('Gemini API Error Details:');
+      console.error('Status:', error.response?.status);
+      console.error('Status Text:', error.response?.statusText);
+      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      console.error('Full URL:', `${config.baseURL}`);
+      throw error;
+    }
   }
 
 

@@ -1,23 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { recruiterService } from "../services/recruiterService";
+import { studentService } from "../services/studentService";
 import {
   MapPin,
   Clock,
   DollarSign,
-  Building2,
-  Calendar,
-  Users,
   Briefcase,
   Send,
   X,
   Search,
   Filter,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
-  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(null);
   const [form, setForm] = useState({ name: "", email: "", resumeUrl: "" });
@@ -26,12 +23,8 @@ export default function Jobs() {
 
   useEffect(() => {
     (async () => {
-      const [j, c] = await Promise.all([
-        recruiterService.getJobs(),
-        recruiterService.getCompanyProfile(),
-      ]);
-      setJobs(Array.isArray(j) ? j : []);
-      setCompany(c);
+      const jobs = await studentService.getAllJobs();
+      setJobs(Array.isArray(jobs) ? jobs : []);
       setLoading(false);
     })();
   }, []);
@@ -88,45 +81,6 @@ export default function Jobs() {
           </p>
         </div>
 
-        {/* Company Info Card */}
-        {company && (
-          <div className="mb-8 group">
-            <div className="relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-              <div className="relative flex items-start gap-6">
-                <div className="p-4 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl">
-                  <Building2 className="h-8 w-8 text-white" />
-                </div>
-
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {company.name || "Company"}
-                  </h2>
-                  <div className="flex items-center gap-2 text-gray-600 mb-3">
-                    <MapPin className="h-4 w-4" />
-                    <span>{company.address}</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
-                      <Users className="h-4 w-4 text-gray-600" />
-                      <span className="text-gray-700">
-                        Size: {company.size || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
-                      <Calendar className="h-4 w-4 text-gray-600" />
-                      <span className="text-gray-700">
-                        Founded: {company.founded || "—"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Search and Filter */}
         <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200 p-6 shadow-lg">
@@ -330,9 +284,13 @@ export default function Jobs() {
                   </button>
                   <button
                     onClick={async () => {
-                      await recruiterService.applyToJob(applying, form);
-                      setApplying(null);
-                      alert("Application submitted successfully!");
+                      try {
+                        await studentService.applyToJob(applying, form);
+                        setApplying(null);
+                        alert("Application submitted successfully!");
+                      } catch (error) {
+                        alert(error.message || "Failed to submit application");
+                      }
                     }}
                     className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all font-medium"
                   >
